@@ -7,7 +7,6 @@ import Dashboard from "./pages/authenticated/dashboard";
 import Navbar from "./components/navbar";
 import ProtectedRoute from "./components/protectedRoutes";
 import CodingSpace from "./pages/authenticated/codingSpace";
-import SignUp from "./pages/unauthenticated/signup";
 
 function App() {
   return (
@@ -16,7 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<SignUp />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route
           path="/dashboard"
           element={

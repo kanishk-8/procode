@@ -6,27 +6,14 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const { login } = useAuth();
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    if (!username || !password) {
+    // Mock login logic
+    if (username && password) {
+      login({ username });
+      console.log("Logged in as:", username);
+    } else {
       alert("Please enter username and password");
-      return;
-    }
-    try {
-      const response = await fetch("http://localhost:8080/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        login(data.user);
-        console.log("Logged in as:", data.user.username);
-      } else {
-        alert(data.message || "Login failed");
-      }
-    } catch (err) {
-      alert("Error connecting to server");
     }
   };
 
