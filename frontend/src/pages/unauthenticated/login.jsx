@@ -6,39 +6,60 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-
-    // Mock login logic
-    if (username && password) {
-      login({ username }); // You can add more fields like email, role, etc.
-      console.log("Logged in as:", username);
-    } else {
+    if (!username || !password) {
       alert("Please enter username and password");
+      return;
+    }
+    try {
+      const response = await fetch("http://localhost:8080/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        login(data.user);
+        console.log("Logged in as:", data.user.username);
+      } else {
+        alert(data.message || "Login failed");
+      }
+    } catch (err) {
+      alert("Error connecting to server");
     }
   };
 
   return (
-    <div className="h-screen w-screen bg-red-100">
-      <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-4xl font-bold mb-4">Login Page</h1>
-        <form className="flex flex-col space-y-4" onSubmit={handleLogin}>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md p-8 bg-white shadow-md rounded">
+        <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
+        <form className="space-y-4" onSubmit={handleLogin}>
           <input
             type="text"
             placeholder="Username"
-            className="p-2 border border-gray-300 rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             onChange={(e) => setUsername(e.target.value)}
           />
           <input
             type="password"
             placeholder="Password"
-            className="p-2 border border-gray-300 rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white p-3 rounded hover:bg-blue-600"
+          >
             Login
           </button>
         </form>
+        <p className="mt-4 text-center">
+          Don't have an account?{" "}
+          <a href="/register" className="text-blue-500 hover:underline">
+            Sign Up
+          </a>
+        </p>
       </div>
     </div>
   );
