@@ -13,12 +13,11 @@ import (
 var Con *sql.DB
 
 func InitConnection() error {
-	// Load .env
+	
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found, using system environment")
 	}
 
-	// Build DSN from environment
 	user := os.Getenv("DB_USER")
 	pass := os.Getenv("DB_PASSWORD")
 	host := os.Getenv("DB_HOST")

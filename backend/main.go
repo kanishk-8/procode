@@ -11,13 +11,11 @@ import (
 )
 
 func main() {
-	// Initialize database connection (DSN built internally)
 	if err := db.InitConnection(); err != nil {
 		log.Fatal("Error connecting to DB:", err)
 	}
 	defer db.Con.Close()
 
-	// Start Fiber app
 	app := fiber.New()
 	app.Use(cors.New())
 

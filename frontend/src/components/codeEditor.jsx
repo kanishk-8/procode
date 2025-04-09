@@ -3,7 +3,7 @@ import Editor from "@monaco-editor/react";
 
 const CodeEditor = () => {
   const editorRef = useRef(null);
-  const [languageId, setLanguageId] = useState("71"); // Default Python 3
+  const [languageId, setLanguageId] = useState("71");
   const [output, setOutput] = useState("");
 
   const handleEditorDidMount = (editor) => {
@@ -16,7 +16,7 @@ const CodeEditor = () => {
     const code = editorRef.current.getValue();
 
     try {
-      const response = await fetch("/run", {
+      const response = await fetch("http://localhost:8080/run", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

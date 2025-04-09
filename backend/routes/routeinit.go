@@ -7,4 +7,6 @@ import (
 func RegisterRoutes(app *fiber.App) {
 	app.Post("/signup", SignUpHandler)
 	app.Post("/login", LoginHandler)
+	app.Post("/run", RunCodeHandler)
+
 }

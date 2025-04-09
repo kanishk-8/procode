@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-// UserData contains user information retrieved from the database
 type UserData struct {
 	ID       int64
 	Username string
@@ -55,7 +54,6 @@ func CreateUserWithRole(username, email, password, role, userRoleId string) (use
 	return userID, nil
 }
 
-// GetUserByCredentials validates credentials and returns user information
 func GetUserByCredentials(username, password string) (*UserData, error) {
 	query := `
 		SELECT u.id, u.username, u.email, u.userpassword, u.role
@@ -78,12 +76,10 @@ func GetUserByCredentials(username, password string) (*UserData, error) {
 		return nil, fmt.Errorf("user not found or database error: %w", err)
 	}
 
-	// Verify password (in a real app, you'd use bcrypt or similar)
 	if storedPassword != password {
 		return nil, errors.New("invalid password")
 	}
 
-	// Get role-specific ID (student_id or teacher_id)
 	if user.Role == "student" {
 		query = "SELECT student_id FROM student WHERE user_id = ?"
 	} else {
