@@ -6,7 +6,7 @@ const Hero = () => {
     <div className="w-[90%] flex bg-gray-800 h-2/3 rounded-2xl">
       <div className="flex flex-col justify-center items-center w-full">
         <h1 className="text-white text-5xl font-bold mb-4">
-          Welcome to CodeCrack
+          Welcome to ProCode
         </h1>
         <p className="text-gray-400 text-lg mb-8">
           Your ultimate coding challenge platform

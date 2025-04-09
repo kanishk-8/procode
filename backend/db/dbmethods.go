@@ -3,6 +3,8 @@ package db
 import (
 	"errors"
 	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserData struct {
@@ -12,7 +14,10 @@ type UserData struct {
 	Role     string
 	RoleID   string
 }
-
+func checkPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
 func CreateUserWithRole(username, email, password, role, userRoleId string) (userID int64, err error) {
 	if role != "student" && role != "teacher" {
 		return 0, errors.New("invalid role: must be 'student' or 'teacher'")
@@ -76,7 +81,7 @@ func GetUserByCredentials(username, password string) (*UserData, error) {
 		return nil, fmt.Errorf("user not found or database error: %w", err)
 	}
 
-	if storedPassword != password {
+	if checkPasswordHash(password,storedPassword) {
 		return nil, errors.New("invalid password")
 	}
 
