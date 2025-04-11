@@ -15,19 +15,20 @@ const SignUp = () => {
     if (!emailRegex.test(email)) return "Please enter a valid email address.";
     if (!password) return "Password is required.";
     if (password.length < 6) return "Password must be at least 6 characters.";
-    if (!userId.trim()) return `${role === "student" ? "Student" : "Teacher"} ID is required.`;
+    if (!userId.trim())
+      return `${role === "student" ? "Student" : "Teacher"} ID is required.`;
     return null;
   };
 
   const RegisterHandler = async (e) => {
     e.preventDefault();
-  
+
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
       return;
     }
-  
+
     setError("");
     try {
       const response = await fetch("http://localhost:8080/signup", {
@@ -35,9 +36,9 @@ const SignUp = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, email, userId, role }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.status === 200) {
         console.log("Signed up:", data);
         window.location.href = "/login";
@@ -48,11 +49,10 @@ const SignUp = () => {
       setError("Error connecting to server");
     }
   };
-  
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 bg-white shadow-md rounded">
+    <div className="min-h-screen flex items-center justify-center ">
+      <div className="w-full max-w-md p-8 bg-white/15 backdrop-blur-2xl  shadow-md rounded-xl">
         <h1 className="text-3xl font-bold mb-6 text-center">Sign Up</h1>
         {error && <div className="mb-4 text-red-500 text-sm">{error}</div>}
         <form className="space-y-4" onSubmit={RegisterHandler}>

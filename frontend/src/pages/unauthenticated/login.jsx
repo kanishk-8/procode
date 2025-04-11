@@ -12,18 +12,18 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     // Reset error state
     setError("");
-    
+
     // Validate input
     if (!username || !password) {
       setError("Please enter username and password");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       // Call the login API
       const response = await fetch("http://localhost:8080/login", {
@@ -33,17 +33,17 @@ const Login = () => {
         },
         body: JSON.stringify({ username, password }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
-      
+
       // Update auth context with user data
       login(data.user);
       console.log("Logged in successfully as:", data.user.username);
-      
+
       // Redirect to dashboard after successful login
       navigate("/dashboard");
     } catch (err) {
@@ -55,8 +55,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md p-8 bg-white shadow-md rounded">
+    <div className="min-h-screen flex items-center justify-center ">
+      <div className="w-full max-w-md p-8 bg-white/15 backdrop-blur-2xl  shadow-md rounded-xl">
         <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

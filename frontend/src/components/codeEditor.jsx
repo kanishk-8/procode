@@ -71,6 +71,12 @@ const CodeEditor = () => {
             defaultLanguage="python"
             defaultValue="# Write your code here"
             theme="vs-dark"
+            options={{
+              fontSize: 16,
+              minimap: { enabled: false },
+              automaticLayout: true,
+              wordWrap: "on",
+            }}
             onMount={handleEditorDidMount}
           />
         </div>
@@ -78,7 +84,7 @@ const CodeEditor = () => {
 
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-2">Output:</h2>
-        <div className="bg-gray-100 border border-gray-300 p-4 rounded whitespace-pre-wrap">
+        <div className=" border border-gray-300 p-4 rounded whitespace-pre-wrap">
           {output}
         </div>
       </div>
