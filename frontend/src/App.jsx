@@ -7,6 +7,7 @@ import Dashboard from "./pages/authenticated/dashboard";
 import Navbar from "./components/navbar";
 import ProtectedRoute from "./components/protectedRoutes";
 import CodingSpace from "./pages/authenticated/codingSpace";
+import Batch from "./pages/authenticated/batch";
 
 function App() {
   return (
@@ -25,10 +26,18 @@ function App() {
           }
         />
         <Route
-          path="/codingSpace"
+          path="/codingSpace/:questionId"
           element={
             <ProtectedRoute>
               <CodingSpace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="batch/:batchId"
+          element={
+            <ProtectedRoute>
+              <Batch />
             </ProtectedRoute>
           }
         />

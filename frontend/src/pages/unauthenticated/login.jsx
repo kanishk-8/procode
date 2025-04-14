@@ -33,7 +33,7 @@ const Login = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password: saltedPassword }), // use saltedPassword
+        body: JSON.stringify({ username, password }), // use saltedPassword
       });
 
       const data = await response.json();
