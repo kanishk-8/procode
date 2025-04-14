@@ -8,7 +8,7 @@ const Home = () => {
       <div className="w-screen flex h-[30vw] justify-center py-10 mt-16 ">
         <Hero />
       </div>
-      <section className="py-20">
+      <section className="pb-20">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold mb-6 text-center">
             Welcome to ProCode
