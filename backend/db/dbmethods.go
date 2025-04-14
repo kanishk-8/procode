@@ -14,6 +14,7 @@ type UserData struct {
 	Role     string
 	RoleID   string
 }
+
 func checkPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
@@ -81,7 +82,7 @@ func GetUserByCredentials(username, password string) (*UserData, error) {
 		return nil, fmt.Errorf("user not found or database error: %w", err)
 	}
 
-	if checkPasswordHash(password,storedPassword) {
+	if !checkPasswordHash(password, storedPassword) {
 		return nil, errors.New("invalid password")
 	}
 
