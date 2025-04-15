@@ -13,7 +13,7 @@ import (
 var Con *sql.DB
 
 func InitConnection() error {
-	
+
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found, using system environment")
 	}
@@ -59,7 +59,7 @@ func createTablesIfNotExist() error {
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		user_id INT,
 		student_id VARCHAR(100) NOT NULL,
-		FOREIGN KEY (user_id) REFERENCES user(id)
+		FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 	);`
 
 	teacherTable := `
@@ -67,10 +67,69 @@ func createTablesIfNotExist() error {
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		user_id INT,
 		teacher_id VARCHAR(100) NOT NULL,
-		FOREIGN KEY (user_id) REFERENCES user(id)
+		FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 	);`
 
-	tables := []string{userTable, studentTable, teacherTable}
+	batchTable := `
+	CREATE TABLE IF NOT EXISTS batch (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		teacher_id INT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		is_active BOOLEAN DEFAULT TRUE,
+		FOREIGN KEY (teacher_id) REFERENCES teacher(id) ON DELETE CASCADE
+	);`
+
+	batchStudentTable := `
+	CREATE TABLE IF NOT EXISTS batch_student (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		batch_id INT NOT NULL,
+		student_id INT NOT NULL,
+		joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE,
+		FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE,
+		UNIQUE KEY (batch_id, student_id)
+	);`
+
+	noteTable := `
+	CREATE TABLE IF NOT EXISTS note (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		batch_id INT NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		content TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE
+	);`
+
+	questionTable := `
+	CREATE TABLE IF NOT EXISTS question (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		teacher_id INT NOT NULL,
+		batch_id INT NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		description TEXT,
+		input_test_cases TEXT,
+		expected_output TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		FOREIGN KEY (teacher_id) REFERENCES teacher(id) ON DELETE CASCADE,
+		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE
+	);`
+
+	attemptTable := `
+	CREATE TABLE IF NOT EXISTS attempt (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		student_id INT NOT NULL,
+		question_id INT NOT NULL,
+		submitted_code TEXT,
+		status ENUM('correct', 'incorrect', 'partially_correct') NOT NULL,
+		submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE,
+		FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE
+	);`
+
+	tables := []string{userTable, studentTable, teacherTable, batchTable, batchStudentTable, noteTable, questionTable, attemptTable}
 	for _, table := range tables {
 		_, err := Con.Exec(table)
 		if err != nil {

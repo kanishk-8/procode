@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-const jwtSecret = "your_secret_key" // Keep in env in production
+var jwtSecret = os.Getenv("jwt_secret_key") // Keep in env in production
 
 func RequireAuth(c *fiber.Ctx) error {
 	// Read JWT cookie
@@ -18,6 +21,9 @@ func RequireAuth(c *fiber.Ctx) error {
 
 	// Parse & verify token
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return []byte(jwtSecret), nil
 	})
 

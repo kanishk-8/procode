@@ -4,12 +4,14 @@ import (
 	"strings"
 	"time"
 
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/kanishk-8/procode/db"
 )
 
-const jwtSecret = "your_secret_key"
+var jwtSecret = os.Getenv("jwt_secret_key")
 
 type LoginRequest struct {
 	Username string `json:"username"`
@@ -58,10 +60,10 @@ func LoginHandler(c *fiber.Ctx) error {
 	claims := jwt.MapClaims{
 		"userId":   user.ID,
 		"username": user.Username,
-		 "email":    user.Email,     // Add email to claims
-        "role":     user.Role,      // Add role to claims
-        "roleId":   user.RoleID,    // Add roleId to claims
-		"exp":      time.Now().Add(72 * time.Hour).Unix(),
+		"email":    user.Email,  // Add email to claims
+		"role":     user.Role,   // Add role to claims
+		"roleId":   user.RoleID, // Add roleId to claims
+		"exp":      time.Now().Add(15 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(jwtSecret))
@@ -70,17 +72,41 @@ func LoginHandler(c *fiber.Ctx) error {
 			"message": "Could not generate token",
 		})
 	}
+	refreshClaims := jwt.MapClaims{
+		"userId":   user.ID,
+		"username": user.Username,
+		"email":    user.Email, // Add email to claims
+		"role":     user.Role,  // Add role to claims
+		"roleId":   user.RoleID,
+		"exp":      time.Now().Add(7 * 24 * time.Hour).Unix(),
+	}
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	signedRefreshToken, err := refreshToken.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Could not generate refresh token",
+		})
+	}
 
 	// Set cookie with improved settings
 	c.Cookie(&fiber.Cookie{
 		Name:     "jwt",
 		Value:    signedToken,
-		Expires:  time.Now().Add(72 * time.Hour),
+		Expires:  time.Now().Add(15 * time.Minute),
 		HTTPOnly: true,
-		SameSite: "Lax",           // Use Lax for most cases, "None" for cross-origin with Secure:true
-		Path:     "/",             // Make cookie available on all paths
-		Secure:   false,           // Set to true in production with HTTPS
-		Domain:   "",              // Using default domain
+		SameSite: "None", // Use Lax for most cases, "None" for cross-origin with Secure:true
+		Path:     "/",    // Make cookie available on all paths
+		Secure:   false,  // Set to true in production with HTTPS
+		Domain:   "",     // Using default domain
+	})
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    signedRefreshToken,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		HTTPOnly: true,
+		SameSite: "None",
+		Path:     "/refresh",
+		Secure:   false,
 	})
 
 	// Return successful login with user data and token
@@ -92,7 +118,6 @@ func LoginHandler(c *fiber.Ctx) error {
 			Email:    user.Email,
 			Role:     user.Role,
 			RoleID:   user.RoleID,
-			Token:    signedToken,
 		},
 	})
 }

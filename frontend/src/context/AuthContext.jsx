@@ -1,9 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
-// Check if a previous session exists in storage
 const hasPreviousSession = () => {
   return localStorage.getItem("hadSession") === "true";
 };
@@ -15,13 +13,13 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(hasPreviousSession());
 
-  // Use cookie-based authentication to check current user status
+  // Fetch the current user using cookies
   const fetchCurrentUser = async () => {
     try {
       setLoading(true);
       const response = await fetch("http://localhost:8080/currentUser", {
         method: "GET",
-        credentials: "include", // Important: Includes cookies in the request
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -29,7 +27,6 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Unauthorized, clear user state and session flag
           setUser(null);
           localStorage.removeItem("hadSession");
           setIsLoggedIn(false);
@@ -41,7 +38,6 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       setUser(data.user);
       setError(null);
-      // Mark that we've had a session before
       localStorage.setItem("hadSession", "true");
       setIsLoggedIn(true);
     } catch (err) {
@@ -56,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Check authentication status only if we had a previous session
+  // Check auth status on mount
   useEffect(() => {
     if (hasPreviousSession()) {
       fetchCurrentUser();
@@ -66,12 +62,47 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Auto-refresh token every 13 minutes
+  useEffect(() => {
+    let refreshInterval;
+
+    if (isLoggedIn) {
+      refreshInterval = setInterval(async () => {
+        try {
+          const response = await fetch("http://localhost:8080/refresh", {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to refresh token");
+          }
+
+          const data = await response.json();
+          console.log("Access token refreshed:", data.message);
+
+          // Optional: refresh user state
+          // await fetchCurrentUser();
+        } catch (err) {
+          console.error("Error refreshing token:", err);
+          setUser(null);
+          localStorage.removeItem("hadSession");
+          setIsLoggedIn(false);
+        }
+      }, 13 * 60 * 1000); // 13 minutes
+    }
+
+    return () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+    };
+  }, [isLoggedIn]);
+
   const login = async (username, password) => {
     try {
       setLoading(true);
       const response = await fetch("http://localhost:8080/login", {
         method: "POST",
-        credentials: "include", // Important: Includes cookies in the request
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -86,7 +117,6 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       setUser(data.user);
       setError(null);
-      // Mark that we've had a session after successful login
       localStorage.setItem("hadSession", "true");
       setIsLoggedIn(true);
       return true;
@@ -105,7 +135,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await fetch("http://localhost:8080/logout", {
         method: "GET",
-        credentials: "include", // Important: Includes cookies in the request
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -114,7 +144,6 @@ export const AuthProvider = ({ children }) => {
 
       setUser(null);
       setError(null);
-      // Clear session marker
       localStorage.removeItem("hadSession");
       setIsLoggedIn(false);
     } catch (err) {
@@ -125,7 +154,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Method to refresh user data when needed
   const refreshUser = () => {
     if (isLoggedIn) {
       fetchCurrentUser();
