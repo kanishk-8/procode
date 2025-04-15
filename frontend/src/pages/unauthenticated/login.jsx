@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import bcrypt from "bcryptjs"; // added import for client-side bcrypt
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -24,16 +23,15 @@ const Login = () => {
     }
 
     setLoading(true);
-    const salt = Math.random().toString(); // convert salt to string
-    const saltedPassword = bcrypt.hashSync(password, 10) + salt; // compute hashed+salted password
     try {
-      // Call the login API
+      // Call the login API with plain credentials
       const response = await fetch("http://localhost:8080/login", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }), // use saltedPassword
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
@@ -42,9 +40,8 @@ const Login = () => {
         throw new Error(data.message || "Login failed");
       }
 
-      // Update auth context with user data
+      // Update auth context with user data and persist session
       login(data.user);
-      console.log("Logged in successfully as:", data.user.username);
 
       // Redirect to dashboard after successful login
       navigate("/dashboard");

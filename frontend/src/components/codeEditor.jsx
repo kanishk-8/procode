@@ -18,6 +18,7 @@ const CodeEditor = () => {
     try {
       const response = await fetch("http://localhost:8080/run", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
@@ -35,7 +36,7 @@ const CodeEditor = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 min-w-4xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-4 flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <div>

@@ -5,6 +5,10 @@ import { useAuth } from "../../context/AuthContext";
 
 const Dashboard = () => {
   const { user } = useAuth();
+  if (user === null) {
+    return <div>Loading...</div>;
+  }
+
   if (user.role === "student") {
     return <StudentDash />;
   } else if (user.role === "teacher") {

@@ -2,10 +2,14 @@ package routes
 
 import (
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/kanishk-8/procode/db"
 )
+
+const jwtSecret = "your_secret_key"
 
 type LoginRequest struct {
 	Username string `json:"username"`
@@ -17,7 +21,8 @@ type LoginResponse struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Role     string `json:"role"`
-	RoleID   string `json:"roleId"` // student_id or teacher_id
+	RoleID   string `json:"roleId"`
+	Token    string `json:"token"`
 }
 
 func LoginHandler(c *fiber.Ctx) error {
@@ -49,7 +54,28 @@ func LoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// Return successful login with user data
+	// JWT generation and persistent cookie
+	claims := jwt.MapClaims{
+		"userId":   user.ID,
+		"username": user.Username,
+		"exp":      time.Now().Add(72 * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Could not generate token",
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "jwt",
+		Value:    signedToken,
+		Expires:  time.Now().Add(72 * time.Hour),
+		HTTPOnly: true,
+	})
+
+	// Return successful login with user data and token
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Login successful",
 		"user": LoginResponse{
@@ -58,6 +84,7 @@ func LoginHandler(c *fiber.Ctx) error {
 			Email:    user.Email,
 			Role:     user.Role,
 			RoleID:   user.RoleID,
+			Token:    signedToken,
 		},
 	})
 }
