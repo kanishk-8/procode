@@ -18,12 +18,11 @@ func main() {
 
 	app := fiber.New()
 
-	// Update CORS configuration to handle cookies properly
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5173",  // Update with your frontend URL
+		AllowOrigins:     "http://localhost:5173, http://127.0.0.1:5173",
 		AllowMethods:     "GET,POST,PUT,DELETE",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
-		AllowCredentials: true,                     // Critical for cookies
+		AllowCredentials: true,                  
 	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
