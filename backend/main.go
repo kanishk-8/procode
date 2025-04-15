@@ -20,7 +20,7 @@ func main() {
 
 	// Update CORS configuration to handle cookies properly
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000",  // Update with your frontend URL
+		AllowOrigins:     "http://localhost:5173",  // Update with your frontend URL
 		AllowMethods:     "GET,POST,PUT,DELETE",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: true,                     // Critical for cookies

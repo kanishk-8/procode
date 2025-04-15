@@ -3,11 +3,17 @@ import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
+// Check if a previous session exists in storage
+const hasPreviousSession = () => {
+  return localStorage.getItem("hadSession") === "true";
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(hasPreviousSession());
 
   // Use cookie-based authentication to check current user status
   const fetchCurrentUser = async () => {
@@ -23,8 +29,10 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Unauthorized, clear user state
+          // Unauthorized, clear user state and session flag
           setUser(null);
+          localStorage.removeItem("hadSession");
+          setIsLoggedIn(false);
           return;
         }
         throw new Error("Failed to fetch user data");
@@ -33,19 +41,29 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       setUser(data.user);
       setError(null);
+      // Mark that we've had a session before
+      localStorage.setItem("hadSession", "true");
+      setIsLoggedIn(true);
     } catch (err) {
       console.error("Error fetching current user:", err);
       setError(err.message);
       setUser(null);
+      localStorage.removeItem("hadSession");
+      setIsLoggedIn(false);
     } finally {
       setLoading(false);
       setIsInitialized(true);
     }
   };
 
-  // Check authentication status when the component mounts
+  // Check authentication status only if we had a previous session
   useEffect(() => {
-    fetchCurrentUser();
+    if (hasPreviousSession()) {
+      fetchCurrentUser();
+    } else {
+      setLoading(false);
+      setIsInitialized(true);
+    }
   }, []);
 
   const login = async (username, password) => {
@@ -68,6 +86,9 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       setUser(data.user);
       setError(null);
+      // Mark that we've had a session after successful login
+      localStorage.setItem("hadSession", "true");
+      setIsLoggedIn(true);
       return true;
     } catch (err) {
       console.error("Login error:", err);
@@ -75,6 +96,7 @@ export const AuthProvider = ({ children }) => {
       return false;
     } finally {
       setLoading(false);
+      setIsInitialized(true);
     }
   };
 
@@ -92,6 +114,9 @@ export const AuthProvider = ({ children }) => {
 
       setUser(null);
       setError(null);
+      // Clear session marker
+      localStorage.removeItem("hadSession");
+      setIsLoggedIn(false);
     } catch (err) {
       console.error("Logout error:", err);
       setError(err.message);
@@ -102,7 +127,9 @@ export const AuthProvider = ({ children }) => {
 
   // Method to refresh user data when needed
   const refreshUser = () => {
-    fetchCurrentUser();
+    if (isLoggedIn) {
+      fetchCurrentUser();
+    }
   };
 
   const authContextValue = {
@@ -113,6 +140,7 @@ export const AuthProvider = ({ children }) => {
     error,
     refreshUser,
     isInitialized,
+    isLoggedIn,
   };
 
   return (
