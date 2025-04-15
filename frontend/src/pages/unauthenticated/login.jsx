@@ -7,7 +7,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, error: authError } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -24,27 +24,14 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // Call the login API with plain credentials
-      const response = await fetch("http://localhost:8080/login", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const success = await login(username, password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+      if (success) {
+        // Redirect to dashboard after successful login
+        navigate("/dashboard");
+      } else {
+        setError(authError || "Login failed. Please try again.");
       }
-
-      // Update auth context with user data and persist session
-      login(data.user);
-
-      // Redirect to dashboard after successful login
-      navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
       console.error("Login error:", err);

@@ -36,7 +36,9 @@ func CurrentUserHandler(c *fiber.Ctx) error {
     userData := fiber.Map{
         "userId":   claims["userId"],
         "username": claims["username"],
-        // Add additional fields as needed
+        "email":    claims["email"],    // Extract email from claims
+        "role":     claims["role"],     // Extract role from claims
+        "roleId":   claims["roleId"],   // Extract roleId from claims// Add additional fields as needed
     }
 
     return c.JSON(fiber.Map{"user": userData})

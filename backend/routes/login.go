@@ -58,6 +58,9 @@ func LoginHandler(c *fiber.Ctx) error {
 	claims := jwt.MapClaims{
 		"userId":   user.ID,
 		"username": user.Username,
+		 "email":    user.Email,     // Add email to claims
+        "role":     user.Role,      // Add role to claims
+        "roleId":   user.RoleID,    // Add roleId to claims
 		"exp":      time.Now().Add(72 * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -68,11 +71,16 @@ func LoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	// Set cookie with improved settings
 	c.Cookie(&fiber.Cookie{
 		Name:     "jwt",
 		Value:    signedToken,
 		Expires:  time.Now().Add(72 * time.Hour),
 		HTTPOnly: true,
+		SameSite: "Lax",           // Use Lax for most cases, "None" for cross-origin with Secure:true
+		Path:     "/",             // Make cookie available on all paths
+		Secure:   false,           // Set to true in production with HTTPS
+		Domain:   "",              // Using default domain
 	})
 
 	// Return successful login with user data and token
