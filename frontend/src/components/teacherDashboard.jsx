@@ -1,8 +1,41 @@
 import React, { useState } from "react";
 
-const TeacherDashboard = () => {
+const TeacherDashboard = ({ id }) => {
   const [activeTab, setActiveTab] = useState("students");
   const [activeBatchTab, setActiveBatchTab] = useState("questions");
+  const [showAddBatchForm, setShowAddBatchForm] = useState(false);
+  const [newBatchName, setNewBatchName] = useState("");
+  const [batchMessage, setBatchMessage] = useState("");
+
+  const handleAddBatchSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/addBatch", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newBatchName,
+          teacher_id: id, // Replace with actual teacher ID if available
+        }),
+      });
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : {};
+      if (response.ok) {
+        setBatchMessage(
+          "Batch created successfully with ID " + data.batch.batch_id
+        );
+      } else {
+        setBatchMessage(data.message || "Error creating batch");
+      }
+      setNewBatchName("");
+      setShowAddBatchForm(false);
+    } catch (error) {
+      setBatchMessage("Error: " + error.message);
+    }
+  };
 
   return (
     <div className="flex h-screen flex-col">
@@ -36,7 +69,7 @@ const TeacherDashboard = () => {
           <section>
             <h2 className="text-xl font-bold mb-4">Manage Students</h2>
             {/* Student Management Table */}
-            <table className="min-w-full  shadow rounded">
+            <table className="min-w-full shadow rounded">
               <thead>
                 <tr>
                   <th className="py-2 px-4 border-b">Name</th>
@@ -65,6 +98,42 @@ const TeacherDashboard = () => {
         {activeTab === "batches" && (
           <section>
             <h2 className="text-xl font-bold mb-4">Batch Management</h2>
+            {/* Add Batch Button and Form */}
+            <div className="mb-4">
+              {!showAddBatchForm ? (
+                <button
+                  onClick={() => setShowAddBatchForm(true)}
+                  className="bg-green-600 text-white py-2 px-4 rounded"
+                >
+                  Add Batch
+                </button>
+              ) : (
+                <form onSubmit={handleAddBatchSubmit} className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Enter batch name"
+                    value={newBatchName}
+                    onChange={(e) => setNewBatchName(e.target.value)}
+                    className="border p-2 mr-2"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white py-2 px-4 rounded"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddBatchForm(false)}
+                    className="ml-2 py-2 px-4 rounded border"
+                  >
+                    Cancel
+                  </button>
+                </form>
+              )}
+              {batchMessage && <p>{batchMessage}</p>}
+            </div>
             {/* Inner Navigation for Batch Content */}
             <nav className="flex space-x-4 mb-4 p-4 bg-gray-700 rounded-lg shadow">
               <button

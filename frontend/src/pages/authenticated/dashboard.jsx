@@ -8,11 +8,11 @@ const Dashboard = () => {
   if (user === null) {
     return <div>Loading...</div>;
   }
-
+  console.log("User role:", user.roleId);
   if (user.role === "student") {
     return <StudentDash />;
   } else if (user.role === "teacher") {
-    return <TeacherDashboard />; // fixed: now returns TeacherDashboard
+    return <TeacherDashboard id={user.roleId} />; // fixed: now returns TeacherDashboard
   } else {
     return <div>Invalid role</div>; // fixed: returns value
   }
