@@ -40,6 +40,5 @@ func RequireAuth(c *fiber.Ctx) error {
 	c.Locals("email", claims["email"])
 	c.Locals("role", claims["role"])
 	c.Locals("roleId", claims["roleId"])
-
 	return c.Next()
 }
