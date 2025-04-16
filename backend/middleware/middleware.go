@@ -37,6 +37,9 @@ func RequireAuth(c *fiber.Ctx) error {
 	claims := token.Claims.(jwt.MapClaims)
 	c.Locals("userId", claims["userId"])
 	c.Locals("username", claims["username"])
+	c.Locals("email", claims["email"])
+	c.Locals("role", claims["role"])
+	c.Locals("roleId", claims["roleId"])
 
 	return c.Next()
 }

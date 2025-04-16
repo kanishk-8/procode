@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"strings"
 	"time"
 
@@ -55,7 +56,7 @@ func LoginHandler(c *fiber.Ctx) error {
 			"message": "Invalid credentials",
 		})
 	}
-
+    log.Println(user.Role)
 	// JWT generation and persistent cookie
 	claims := jwt.MapClaims{
 		"userId":   user.ID,
