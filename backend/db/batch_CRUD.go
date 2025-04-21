@@ -15,31 +15,32 @@ type BatchData struct {
 	IsActive  bool
 }
 
-func CreateBatch(name string, teacherID int64) (int64, error) {
-	var exists bool
-	err := Con.QueryRow("SELECT EXISTS(SELECT 1 FROM teacher WHERE id = ?)", teacherID).Scan(&exists)
-	if err != nil {
-		return 0, fmt.Errorf("error checking teacher: %w", err)
-	}
-	if !exists {
-		return 0, errors.New("teacher not found")
-	}
+func CreateBatch(name string, userID int64) (int64, error) {
+    // First, get the teacher ID from the user ID
+    var teacherID int64
+    err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return 0, errors.New("teacher not found for this user")
+        }
+        return 0, fmt.Errorf("error finding teacher: %w", err)
+    }
 
-	query := `
-		INSERT INTO batch (name, teacher_id, is_active)
-		VALUES (?, ?, TRUE)
-	`
-	result, err := Con.Exec(query, name, teacherID)
-	if err != nil {
-		return 0, fmt.Errorf("error creating batch: %w", err)
-	}
+    query := `
+        INSERT INTO batch (name, teacher_id, is_active)
+        VALUES (?, ?, TRUE)
+    `
+    result, err := Con.Exec(query, name, teacherID)
+    if err != nil {
+        return 0, fmt.Errorf("error creating batch: %w", err)
+    }
 
-	batchID, err := result.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("error getting new batch ID: %w", err)
-	}
+    batchID, err := result.LastInsertId()
+    if err != nil {
+        return 0, fmt.Errorf("error getting new batch ID: %w", err)
+    }
 
-	return batchID, nil
+    return batchID, nil
 }
 
 // GetBatch fetches a single batch by ID

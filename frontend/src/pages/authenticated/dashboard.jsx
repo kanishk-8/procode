@@ -12,7 +12,7 @@ const Dashboard = () => {
   if (user.role === "student") {
     return <StudentDash />;
   } else if (user.role === "teacher") {
-    return <TeacherDashboard id={user.roleId} />; // fixed: now returns TeacherDashboard
+    return <TeacherDashboard id={user.userId} />; // fixed: now returns TeacherDashboard
   } else {
     return <div>Invalid role</div>; // fixed: returns value
   }

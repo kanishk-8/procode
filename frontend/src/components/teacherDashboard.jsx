@@ -10,7 +10,7 @@ const TeacherDashboard = ({ id }) => {
   const handleAddBatchSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("/addBatch", {
+      const response = await fetch("http://localhost:8080/addBatch", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -18,7 +18,7 @@ const TeacherDashboard = ({ id }) => {
         },
         body: JSON.stringify({
           name: newBatchName,
-          teacher_id: id, // Replace with actual teacher ID if available
+          user_id: id, // Replace with actual teacher ID if available
         }),
       });
       const text = await response.text();
