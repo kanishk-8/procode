@@ -33,7 +33,7 @@ func RequireStudentAuth(c *fiber.Ctx) error {
 
 	if role != "student" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"message": "Access denied - teacher role required",
+			"message": "Access denied - student role required",
 		})
 	}
 	// log.Println(claims)

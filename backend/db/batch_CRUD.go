@@ -129,19 +129,41 @@ func GetBatchesByTeacher(userID int64) ([]*BatchData, error) {
 
 	return batches, nil
 }
-func AddStudentToBatch(batchID, studentID int64) error {
-	var batchExists, studentExists bool
 
-	err := Con.QueryRow("SELECT EXISTS(SELECT 1 FROM batch WHERE id = ?)", batchID).Scan(&batchExists)
-	if err != nil || !batchExists {
+func JoinBatch(batchID, userID int64) error {
+	// Get the student ID from the user ID
+	// If the user is not a student, this will return sql.ErrNoRows
+	var studentID int64
+	err := Con.QueryRow("SELECT id FROM student WHERE user_id = ?", userID).Scan(&studentID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.New("only students can join batches")
+		}
+		return fmt.Errorf("error getting student ID: %w", err)
+	}
+
+	// Check if the batch exists
+	var batchExists bool
+	err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM batch WHERE id = ?)", batchID).Scan(&batchExists)
+	if err != nil {
+		return fmt.Errorf("error checking if batch exists: %w", err)
+	}
+	if !batchExists {
 		return errors.New("batch not found")
 	}
 
-	err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM student WHERE id = ?)", studentID).Scan(&studentExists)
-	if err != nil || !studentExists {
-		return errors.New("student not found")
+	// Check if student is already in the batch
+	var alreadyJoined bool
+	err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM batch_student WHERE batch_id = ? AND student_id = ?)",
+		batchID, studentID).Scan(&alreadyJoined)
+	if err != nil {
+		return fmt.Errorf("error checking if already joined: %w", err)
+	}
+	if alreadyJoined {
+		return errors.New("student has already joined this batch")
 	}
 
+	// Add the student to the batch
 	query := `
 		INSERT INTO batch_student (batch_id, student_id)
 		VALUES (?, ?)
@@ -149,13 +171,33 @@ func AddStudentToBatch(batchID, studentID int64) error {
 
 	_, err = Con.Exec(query, batchID, studentID)
 	if err != nil {
-		return fmt.Errorf("error adding student to batch: %w", err)
+		return fmt.Errorf("error joining batch: %w", err)
 	}
 
 	return nil
 }
 
-func GetStudentsInBatch(batchID int64) ([]*UserData, error) {
+func GetStudentsInBatch(batchID int64, userID int64) ([]*UserData, error) {
+	// First, verify if the user is a teacher
+	var teacherID int64
+	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("only teachers can view students in a batch")
+		}
+		return nil, fmt.Errorf("error verifying teacher status: %w", err)
+	}
+
+	// Verify if the teacher is associated with the batch
+	var exists bool
+	err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM batch WHERE id = ? AND teacher_id = ?)", batchID, teacherID).Scan(&exists)
+	if err != nil {
+		return nil, fmt.Errorf("error checking batch ownership: %w", err)
+	}
+	if !exists {
+		return nil, errors.New("batch not found or you don't have permission to view its students")
+	}
+
 	query := `
 		SELECT u.id, u.username, u.email, u.role, s.student_id
 		FROM user u
