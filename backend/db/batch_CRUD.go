@@ -130,6 +130,55 @@ func GetBatchesByTeacher(userID int64) ([]*BatchData, error) {
 	return batches, nil
 }
 
+func GetBatchesByStudent(userID int64) ([]*BatchData, error) {
+	// First, get the student ID from the user ID
+	var studentID int64
+	err := Con.QueryRow("SELECT id FROM student WHERE user_id = ?", userID).Scan(&studentID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("student not found for this user")
+		}
+		return nil, fmt.Errorf("error finding student: %w", err)
+	}
+
+	query := `
+        SELECT b.id, b.name, b.teacher_id, b.created_at, b.is_active
+        FROM batch b
+        JOIN batch_student bs ON b.id = bs.batch_id
+        WHERE bs.student_id = ?
+        ORDER BY b.created_at DESC
+    `
+
+	rows, err := Con.Query(query, studentID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying batches: %w", err)
+	}
+	defer rows.Close()
+
+	var batches []*BatchData
+	for rows.Next() {
+		var batch BatchData
+		if err := rows.Scan(
+			&batch.ID,
+			&batch.Name,
+			&batch.TeacherID,
+			&batch.CreatedAt,
+			&batch.IsActive,
+		); err != nil {
+			return nil, fmt.Errorf("error scanning batch row: %w", err)
+		}
+
+		batch.CreatedAt = batch.CreatedAt.In(ist)
+		batches = append(batches, &batch)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error after scanning rows: %w", err)
+	}
+
+	return batches, nil
+}
+
 func JoinBatch(batchID, userID int64) error {
 	// Get the student ID from the user ID
 	// If the user is not a student, this will return sql.ErrNoRows
