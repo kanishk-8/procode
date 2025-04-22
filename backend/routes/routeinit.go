@@ -13,4 +13,5 @@ func RegisterRoutes(app *fiber.App) {
 	app.Get("/logout", middleware.RequireAuth, LogoutHandler)
 	app.Get("/currentUser", middleware.RequireAuth, CurrentUserHandler)
 	app.Post("/addBatch", middleware.RequireTeacherAuth, AddBatchHandler)
+	app.Get("/getbatchesbyteacher", middleware.RequireTeacherAuth, GetBatchesByTeacherHandler)
 }

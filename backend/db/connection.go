@@ -23,7 +23,10 @@ func InitConnection() error {
 	port := os.Getenv("DB_PORT")
 	name := os.Getenv("DB_NAME")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, pass, host, port, name)
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=Local",
+		user, pass, host, port, name,
+	)
 
 	var err error
 	Con, err = sql.Open("mysql", dsn)

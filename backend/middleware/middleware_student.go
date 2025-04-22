@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func RequireTeacherAuth(c *fiber.Ctx) error {
+func RequireStudentAuth(c *fiber.Ctx) error {
 	tokenStr := c.Cookies("jwt")
 	if tokenStr == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -31,7 +31,7 @@ func RequireTeacherAuth(c *fiber.Ctx) error {
 	claims := token.Claims.(jwt.MapClaims)
 	role := claims["role"]
 
-	if role != "teacher" {
+	if role != "student" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": "Access denied - teacher role required",
 		})
