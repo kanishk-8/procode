@@ -8,6 +8,7 @@ import Navbar from "./components/navbar";
 import ProtectedRoute from "./components/protectedRoutes";
 import CodingSpace from "./pages/authenticated/codingSpace";
 import Batch from "./pages/authenticated/batch";
+import ClassRoom from "./pages/authenticated/classroom";
 
 function App() {
   return (
@@ -38,6 +39,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Batch />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="classroom"
+          element={
+            <ProtectedRoute>
+              <ClassRoom />
             </ProtectedRoute>
           }
         />

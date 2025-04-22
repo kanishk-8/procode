@@ -18,24 +18,31 @@ const Navbar = () => {
           <span className="text-lg font-bold">ProCode</span>
         </Link>
 
-        <nav className="flex space-x-4">
-          <Link to="/" className="hover:text-gray-200 text-lg font-bold">
-            Home
-          </Link>
-
-          {!isLoggedIn ? (
+        {!isLoggedIn ? (
+          <nav className="flex space-x-4">
+            <Link to="/" className="hover:text-gray-200 text-lg font-bold">
+              Home
+            </Link>
             <Link to="/login" className="hover:text-gray-200 text-lg font-bold">
               Login
             </Link>
-          ) : (
+          </nav>
+        ) : (
+          <nav className="flex space-x-4">
             <Link
               to="/dashboard"
               className="hover:text-gray-200 text-lg font-bold"
             >
               Dashboard
             </Link>
-          )}
-        </nav>
+            <Link
+              to="/classroom"
+              className="hower:text-gray-200 text-lg font-bold"
+            >
+              Classroom
+            </Link>
+          </nav>
+        )}
       </div>
       {isLoggedIn && (
         <div className="flex mt-4 rounded-4xl h-16 w-16 content-center items-center bg-white/10 backdrop-blur-lg text-white p-4">
