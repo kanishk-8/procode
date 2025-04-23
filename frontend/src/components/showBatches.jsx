@@ -11,6 +11,9 @@ function ShowBatches() {
   const [isLoading, setIsLoading] = useState(true);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [batchCode, setBatchCode] = useState("");
+  const [showStudentsModal, setShowStudentsModal] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState(null);
+  const [students, setStudents] = useState([]);
 
   // Fetch batches based on user role
   const fetchBatches = async () => {
@@ -112,6 +115,26 @@ function ShowBatches() {
     }
   };
 
+  const fetchStudentsInBatch = async (batchId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/getstudentsinbatch/${batchId}`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch students");
+
+      const data = await response.json();
+      setStudents(data.students || []);
+      setSelectedBatch(batches.find((b) => b.ID === batchId));
+      setShowStudentsModal(true);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   // Show loading state
   if (isLoading) {
     return (
@@ -130,7 +153,7 @@ function ShowBatches() {
           {user?.role === "teacher" ? (
             <button
               onClick={() => setShowAddBatchModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
             >
               Create Classroom
             </button>
@@ -164,36 +187,53 @@ function ShowBatches() {
             {batches.map((batch) => (
               <div
                 key={batch.ID}
-                className="border rounded-lg p-4 h-48 shadow-sm"
+                className="border rounded-lg p-4 h-48 shadow-sm flex flex-col justify-between"
               >
-                <div className="flex justify-between items-start">
-                  <Link to={`/batch/${batch.ID}`}>
-                    <h3 className="text-xl font-semibold">{batch.Name}</h3>
-                  </Link>
-                  {user?.role === "teacher" && (
-                    <button
-                      onClick={() => handleDeleteBatch(batch.ID)}
-                      className="text-red-600 hover:text-red-800"
+                <div>
+                  <div className="flex justify-between items-start">
+                    <Link
+                      to={
+                        user?.role === "teacher"
+                          ? `/batchTeacher/${batch.ID}`
+                          : `/batch/${batch.ID}`
+                      }
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      <h3 className="text-xl font-semibold">{batch.Name}</h3>
+                    </Link>
+                    {user?.role === "teacher" && (
+                      <button
+                        onClick={() => handleDeleteBatch(batch.ID)}
+                        className="text-red-600 hover:text-red-800"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
-                  )}
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-gray-600 mt-2">
+                    Created: {new Date(batch.CreatedAt).toLocaleDateString()}
+                  </p>
+                  <p className="text-gray-600 mt-2">Join Code: {batch.ID}</p>
                 </div>
-                <p className="text-gray-600 mt-2">
-                  Created: {new Date(batch.CreatedAt).toLocaleDateString()}
-                </p>
+                {user?.role === "teacher" && (
+                  <button
+                    onClick={() => fetchStudentsInBatch(batch.ID)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2 w-full"
+                  >
+                    Enrolled Students
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -236,17 +276,15 @@ function ShowBatches() {
         {/* Create Modal */}
         {showAddBatchModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white border-2 rounded-lg p-6 w-96">
-              <h3 className="text-xl font-bold mb-4 text-gray-800">
-                Create New Classroom
-              </h3>
+            <div className=" border-2 rounded-lg p-6 w-96">
+              <h3 className="text-xl font-bold mb-4 ">Create New Classroom</h3>
               <form onSubmit={handleAddBatch}>
                 <input
                   type="text"
                   value={newBatchName}
                   onChange={(e) => setNewBatchName(e.target.value)}
                   placeholder="Classroom Name"
-                  className="w-full border rounded p-2 mb-4 text-gray-800"
+                  className="w-full border rounded p-2 mb-4 text-gray-200"
                   required
                 />
                 <div className="flex justify-end gap-2">
@@ -265,6 +303,42 @@ function ShowBatches() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Students Modal */}
+        {showStudentsModal && selectedBatch && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-zinc-900 border-2 rounded-lg p-6 w-96">
+              <h3 className="text-xl font-bold mb-4">
+                Students in {selectedBatch.Name}
+              </h3>
+              {students.length === 0 ? (
+                <p className="text-gray-400">
+                  No students in this classroom yet
+                </p>
+              ) : (
+                <div className="max-h-96 overflow-y-auto">
+                  {students.map((student) => (
+                    <div
+                      key={student.ID}
+                      className="p-3 border-b border-gray-700 last:border-b-0"
+                    >
+                      <p className="font-medium">{student.Username}</p>
+                      <p className="text-sm text-gray-400">{student.Email}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-4 text-right">
+                <button
+                  onClick={() => setShowStudentsModal(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

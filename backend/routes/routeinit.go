@@ -18,4 +18,5 @@ func RegisterRoutes(app *fiber.App) {
 	app.Get("/joinbatch/:batchId", middleware.RequireStudentAuth, JoinBatchByParamHandler)
 	app.Get("/getstudentsinbatch/:batchID", middleware.RequireTeacherAuth, GetStudentsInBatchHandler)
 	app.Get("/getstudentbatches", middleware.RequireStudentAuth, GetStudentBatchesHandler)
+	app.Post("/addquestion", middleware.RequireTeacherAuth, AddQuestionHandler)
 }
