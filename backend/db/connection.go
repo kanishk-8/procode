@@ -105,6 +105,7 @@ func createTablesIfNotExist() error {
 		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE
 	);`
 
+	// ✅ Updated: removed input_test_cases and expected_output from question table
 	questionTable := `
 	CREATE TABLE IF NOT EXISTS question (
 		id INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,12 +113,23 @@ func createTablesIfNotExist() error {
 		batch_id INT NOT NULL,
 		title VARCHAR(255) NOT NULL,
 		description TEXT,
-		input_test_cases TEXT,
-		expected_output TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		FOREIGN KEY (teacher_id) REFERENCES teacher(id) ON DELETE CASCADE,
 		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE
+	);`
+
+	// ✅ NEW TABLE: test_case
+	testCaseTable := `
+	CREATE TABLE IF NOT EXISTS test_case (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		question_id INT NOT NULL,
+		input_text TEXT NOT NULL,
+		expected_output TEXT NOT NULL,
+		is_hidden BOOLEAN DEFAULT FALSE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE
 	);`
 
 	attemptTable := `
@@ -132,7 +144,12 @@ func createTablesIfNotExist() error {
 		FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE
 	);`
 
-	tables := []string{userTable, studentTable, teacherTable, batchTable, batchStudentTable, noteTable, questionTable, attemptTable}
+	// Added testCaseTable in the list ✅
+	tables := []string{
+		userTable, studentTable, teacherTable, batchTable,
+		batchStudentTable, noteTable, questionTable, testCaseTable, attemptTable,
+	}
+
 	for _, table := range tables {
 		_, err := Con.Exec(table)
 		if err != nil {

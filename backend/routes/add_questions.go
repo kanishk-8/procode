@@ -5,12 +5,17 @@ import (
 	"github.com/kanishk-8/procode/db"
 )
 
-type AddQuestionRequest struct {
-	BatchID        int64  `json:"batch_id"`
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	InputTestCases string `json:"input_test_cases"`
+type TestCase struct {
+	InputText      string `json:"input_text"`
 	ExpectedOutput string `json:"expected_output"`
+	IsHidden       bool   `json:"is_hidden"`
+}
+
+type AddQuestionRequest struct {
+	BatchID     int64      `json:"batch_id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	TestCases   []TestCase `json:"test_cases"`
 }
 
 func AddQuestionHandler(c *fiber.Ctx) error {
@@ -38,13 +43,22 @@ func AddQuestionHandler(c *fiber.Ctx) error {
 	}
 	userID := int64(userIDFloat)
 
+	// Convert the TestCase slice to db.TestCase slice
+	dbTestCases := make([]db.TestCase, len(req.TestCases))
+	for i, tc := range req.TestCases {
+		dbTestCases[i] = db.TestCase{
+			InputText:      tc.InputText,
+			ExpectedOutput: tc.ExpectedOutput,
+			IsHidden:       tc.IsHidden,
+		}
+	}
+
 	questionID, err := db.CreateQuestion(
 		userID,
 		req.BatchID,
 		req.Title,
 		req.Description,
-		req.InputTestCases,
-		req.ExpectedOutput,
+		dbTestCases,
 	)
 
 	if err != nil {
@@ -54,9 +68,7 @@ func AddQuestionHandler(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Question created successfully",
+		"message":     "Question created successfully",
 		"question_id": questionID,
 	})
 }
-
-

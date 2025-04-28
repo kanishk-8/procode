@@ -8,18 +8,33 @@ import (
 )
 
 type QuestionData struct {
+	ID          int64
+	TeacherID   int64
+	BatchID     int64
+	Title       string
+	Description string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type TestCaseData struct {
 	ID             int64
-	TeacherID      int64
-	BatchID        int64
-	Title          string
-	Description    string
-	InputTestCases string
+	QuestionID     int64
+	InputText      string
 	ExpectedOutput string
+	IsHidden       bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
 
-func CreateQuestion(userID int64, batchID int64, title, description, inputTestCases, expectedOutput string) (int64, error) {
+// TestCase represents a test case to be added to a question
+type TestCase struct {
+	InputText      string
+	ExpectedOutput string
+	IsHidden       bool
+}
+
+func CreateQuestion(userID int64, batchID int64, title, description string, testCases []TestCase) (int64, error) {
 	// First, get the teacher ID from the user ID
 	var teacherID int64
 	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
@@ -32,7 +47,7 @@ func CreateQuestion(userID int64, batchID int64, title, description, inputTestCa
 
 	// Verify if the batch exists and belongs to this teacher
 	var exists bool
-	err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM batch WHERE id = ? AND teacher_id = ?)", 
+	err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM batch WHERE id = ? AND teacher_id = ?)",
 		batchID, teacherID).Scan(&exists)
 	if err != nil {
 		return 0, fmt.Errorf("error checking batch ownership: %w", err)
@@ -46,12 +61,24 @@ func CreateQuestion(userID int64, batchID int64, title, description, inputTestCa
 		return 0, errors.New("title and description are required")
 	}
 
-	query := `
-		INSERT INTO question (teacher_id, batch_id, title, description, input_test_cases, expected_output)
-		VALUES (?, ?, ?, ?, ?, ?)
+	// Start a transaction
+	tx, err := Con.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Insert the question
+	questionQuery := `
+		INSERT INTO question (teacher_id, batch_id, title, description)
+		VALUES (?, ?, ?, ?)
 	`
 
-	result, err := Con.Exec(query, teacherID, batchID, title, description, inputTestCases, expectedOutput)
+	result, err := tx.Exec(questionQuery, teacherID, batchID, title, description)
 	if err != nil {
 		return 0, fmt.Errorf("error creating question: %w", err)
 	}
@@ -61,36 +88,24 @@ func CreateQuestion(userID int64, batchID int64, title, description, inputTestCa
 		return 0, fmt.Errorf("error getting new question ID: %w", err)
 	}
 
-	return questionID, nil
-}
-
-func GetQuestion(questionID int64) (*QuestionData, error) {
-	query := `
-		SELECT id, teacher_id, batch_id, title, description, input_test_cases, 
-			expected_output, created_at, updated_at
-		FROM question
-		WHERE id = ?
-	`
-
-	var question QuestionData
-	err := Con.QueryRow(query, questionID).Scan(
-		&question.ID,
-		&question.TeacherID,
-		&question.BatchID,
-		&question.Title,
-		&question.Description,
-		&question.InputTestCases,
-		&question.ExpectedOutput,
-		&question.CreatedAt,
-		&question.UpdatedAt,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("question not found")
+	// Insert the test cases
+	if len(testCases) > 0 {
+		testCaseQuery := `
+			INSERT INTO test_case (question_id, input_text, expected_output, is_hidden)
+			VALUES (?, ?, ?, ?)
+		`
+		for _, tc := range testCases {
+			_, err = tx.Exec(testCaseQuery, questionID, tc.InputText, tc.ExpectedOutput, tc.IsHidden)
+			if err != nil {
+				return 0, fmt.Errorf("error creating test case: %w", err)
+			}
 		}
-		return nil, fmt.Errorf("error fetching question: %w", err)
 	}
 
-	return &question, nil
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return questionID, nil
 }
