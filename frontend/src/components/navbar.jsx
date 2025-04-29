@@ -102,7 +102,7 @@ const Navbar = () => {
           className="mt-4 w-16 h-16 flex items-center justify-center bg-white/10 backdrop-blur-lg text-white rounded-full"
         >
           {/* <span className="text-lg font-bold text-zinc-400">L</span> */}
-          <img src="/login.png" alt="Login" className="h-8 w-8" />
+          <img src="/login.png" alt="Login" className="h-10 w-10" />
         </Link>
       )}
     </div>
