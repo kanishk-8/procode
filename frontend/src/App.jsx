@@ -10,6 +10,7 @@ import CodingSpace from "./pages/authenticated/codingSpace";
 import Batch from "./pages/authenticated/batch";
 import ClassRoom from "./pages/authenticated/classroom";
 import BatchTeacher from "./pages/authenticated/batch_teacher";
+import EvalStudentDetail from "./pages/authenticated/evalStudentDetail";
 
 function App() {
   return (
@@ -32,6 +33,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CodingSpace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/evalStudentDetail/:questionId"
+          element={
+            <ProtectedRoute>
+              <EvalStudentDetail />
             </ProtectedRoute>
           }
         />
