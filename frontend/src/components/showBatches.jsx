@@ -187,7 +187,7 @@ function ShowBatches() {
             {batches.map((batch) => (
               <div
                 key={batch.ID}
-                className="border rounded-lg p-4 h-48 shadow-sm flex flex-col justify-between"
+                className=" bg-white/5 rounded-lg p-4 h-48 shadow-sm flex flex-col justify-between"
               >
                 <div>
                   <div className="flex justify-between items-start">
