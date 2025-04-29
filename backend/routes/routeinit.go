@@ -20,4 +20,5 @@ func RegisterRoutes(app *fiber.App) {
 	app.Post("/addquestion", middleware.RequireTeacherAuth, AddQuestionHandler)
 	app.Get("/getquestionsbybatch/:batchID", middleware.RequireAuth, GetQuestionsByBatchHandler)
 	app.Get("/getquestiondetailsbyid/:batchID/:questionID", middleware.RequireAuth, GetQuestionDetailsByIDHandler)
+	app.Post("/evalques", middleware.RequireStudentAuth, CodeEvaluateHandler)
 }
