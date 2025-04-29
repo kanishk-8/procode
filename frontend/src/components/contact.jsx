@@ -160,7 +160,7 @@ const Contact = () => {
                     </svg>
                   </a>
                   <a
-                    href="#"
+                    href="https://github.com/kanishk-8/procode"
                     className="bg-white/10 hover:bg-white/20 transition-colors p-3 rounded-full"
                   >
                     <svg
