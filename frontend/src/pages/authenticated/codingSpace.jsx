@@ -245,22 +245,51 @@ const CodingSpace = () => {
                             {result.status}
                           </span>
                         </div>
-                        <div className="mt-2 text-sm">
-                          <div className="mb-1">
-                            <span className="text-zinc-400">Input: </span>
-                            <pre className="inline">{result.input}</pre>
+
+                        {result.status !== "PASS" && (
+                          <div className="mt-2 text-sm">
+                            {result.error ? (
+                              // Display runtime or compilation error
+                              <div className="text-red-300 bg-red-900/30 p-2 rounded-md mt-1 overflow-x-auto">
+                                <pre>{result.error}</pre>
+                              </div>
+                            ) : (
+                              // Display input/output comparison for non-hidden test cases
+                              !result.is_hidden && (
+                                <>
+                                  <div className="mb-1">
+                                    <span className="text-zinc-400">
+                                      Input:{" "}
+                                    </span>
+                                    <pre className="inline">{result.input}</pre>
+                                  </div>
+                                  <div className="mb-1">
+                                    <span className="text-zinc-400">
+                                      Expected:{" "}
+                                    </span>
+                                    <pre className="inline">
+                                      {result.expected_output}
+                                    </pre>
+                                  </div>
+                                  <div>
+                                    <span className="text-zinc-400">Got: </span>
+                                    <pre className="inline">
+                                      {result.actual_output}
+                                    </pre>
+                                  </div>
+                                </>
+                              )
+                            )}
+
+                            {/* For hidden test cases that failed but don't have errors */}
+                            {!result.error && result.is_hidden && (
+                              <div className="text-amber-300">
+                                This is a hidden test case. Details are not
+                                displayed.
+                              </div>
+                            )}
                           </div>
-                          <div className="mb-1">
-                            <span className="text-zinc-400">Expected: </span>
-                            <pre className="inline">
-                              {result.expected_output}
-                            </pre>
-                          </div>
-                          <div>
-                            <span className="text-zinc-400">Got: </span>
-                            <pre className="inline">{result.actual_output}</pre>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     ))}
                 </div>

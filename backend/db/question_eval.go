@@ -26,10 +26,11 @@ const (
 // TestResult represents the result of a single test case
 type TestResult struct {
 	Status         string `json:"status"`
-	Input          string `json:"input"`
-	ExpectedOutput string `json:"expected_output"`
+	Input          string `json:"input,omitempty"`
+	ExpectedOutput string `json:"expected_output,omitempty"`
 	ActualOutput   string `json:"actual_output"`
-	IsHidden       bool   `json:"is_hidden,omitempty"`
+	IsHidden       bool   `json:"is_hidden"`
+	Error          string `json:"error,omitempty"` // For runtime or compilation errors
 }
 
 // EvaluationResult represents the complete result of code evaluation
@@ -232,18 +233,41 @@ func runTestCase(apiURL, apiKey, code string, languageID int, input, expectedOut
 	actualOutput := strings.TrimSpace(result.Stdout)
 	expectedOutput = strings.TrimSpace(expectedOutput)
 
-	status := "FAIL"
-	if actualOutput == expectedOutput {
-		status = "PASS"
-	}
-
-	// For hidden test cases, don't return the input and expected output
+	// Create the test result
 	testResult := TestResult{
-		Status:       status,
 		ActualOutput: actualOutput,
 		IsHidden:     isHidden,
 	}
 
+	// Check for compilation or runtime errors
+	if result.Status.ID != 3 { // 3 is the status ID for "Accepted" in Judge0
+		// There was some error
+		errorOutput := ""
+		
+		// Prioritize error messages in this order
+		if result.CompileOutput != "" {
+			errorOutput = result.CompileOutput
+		} else if result.Stderr != "" {
+			errorOutput = result.Stderr
+		} else if result.Message != "" {
+			errorOutput = result.Message
+		} else {
+			errorOutput = "Execution error: " + result.Status.Description
+		}
+		
+		testResult.Status = "FAIL"
+		testResult.Error = errorOutput
+		return testResult, nil
+	}
+
+	// No errors, check if output matches expected
+	if actualOutput == expectedOutput {
+		testResult.Status = "PASS"
+	} else {
+		testResult.Status = "FAIL"
+	}
+
+	// Only include input and expected output for non-hidden test cases
 	if !isHidden {
 		testResult.Input = input
 		testResult.ExpectedOutput = expectedOutput
