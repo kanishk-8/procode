@@ -5,6 +5,30 @@ import (
 	"github.com/kanishk-8/procode/db"
 )
 
+//expected payload
+//{
+// 	"batch_id": 1,
+// 	"title": "Two Sum Problem",
+// 	"description": "Given an array of integers and a target value, find the two numbers that add up to the target. Return their indices in the array. You may assume each input has exactly one solution.",
+// 	"test_cases": [
+// 	  {
+// 		"input_text": "[2, 7, 11, 15]\n9",
+// 		"expected_output": "[0, 1]",
+// 		"is_hidden": false
+// 	  },
+// 	  {
+// 		"input_text": "[3, 2, 4]\n6",
+// 		"expected_output": "[1, 2]",
+// 		"is_hidden": false
+// 	  },
+// 	  {
+// 		"input_text": "[1, 5, 8, 3]\n11",
+// 		"expected_output": "[0, 3]",
+// 		"is_hidden": true
+// 	  }
+// 	]
+//   }
+
 type TestCase struct {
 	InputText      string `json:"input_text"`
 	ExpectedOutput string `json:"expected_output"`
