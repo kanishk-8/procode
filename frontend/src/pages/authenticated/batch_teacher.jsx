@@ -14,7 +14,6 @@ function BatchTeacher() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch questions when component mounts
     fetchQuestions();
   }, [batchId]);
 
@@ -75,7 +74,6 @@ function BatchTeacher() {
         test_cases: [{ input_text: "", expected_output: "", is_hidden: false }],
       });
 
-      // Refresh the questions list after adding a new question
       fetchQuestions();
     } catch (err) {
       setError(err.message);
@@ -94,11 +92,7 @@ function BatchTeacher() {
 
   const updateTestCase = (index, field, value) => {
     const updatedTestCases = [...newQuestion.test_cases];
-    if (field === "is_hidden") {
-      updatedTestCases[index][field] = value;
-    } else {
-      updatedTestCases[index][field] = value;
-    }
+    updatedTestCases[index][field] = value;
 
     setNewQuestion({
       ...newQuestion,
@@ -119,60 +113,53 @@ function BatchTeacher() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-4 mt-24">
-        <h1 className="text-3xl font-bold mb-6">Batch: {batchId}</h1>
+    <div className="min-h-screen py-28 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold">Manage Batch {batchId}</h1>
+          <button
+            onClick={() => setShowAddQuestionModal(true)}
+            className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+          >
+            Add Question
+          </button>
+        </div>
 
-        {/* Content Area - Questions Only */}
-        <div className="p-6 rounded-lg shadow-md ">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Practice Questions</h2>
-              <button
-                onClick={() => setShowAddQuestionModal(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-md transition-colors duration-200"
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-xl text-zinc-400">Loading questions...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <p className="text-red-500">{error}</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {questions.map((question) => (
+              <Link
+                to={`/evalStudentDetail/${question.id}`}
+                key={question.id}
+                className="block"
               >
-                Add Question
-              </button>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-lg">Loading questions...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center py-8 text-red-500">
-                <p>{error}</p>
-              </div>
-            ) : questions.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-lg">
-                  No questions available for this batch.
+                <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all">
+                  <h3 className="text-xl font-medium">{question.title}</h3>
+                </div>
+              </Link>
+            ))}
+            {questions.length === 0 && (
+              <div className="text-center py-12 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                <p className="text-xl text-zinc-400">No questions available</p>
+                <p className="text-zinc-500 mt-2">
+                  Add your first question to get started
                 </p>
-                <p className="text-sm mt-2">Add a question to get started.</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {questions.map((question) => (
-                  <Link
-                    to={`/evalStudentDetail/${question.id}`}
-                    key={question.id}
-                    className="block"
-                  >
-                    <div className="p-5 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors duration-200 cursor-pointer">
-                      <h3 className="font-medium text-lg">{question.title}</h3>
-                    </div>
-                  </Link>
-                ))}
               </div>
             )}
           </div>
-        </div>
+        )}
 
-        {/* Add Question Modal */}
         {showAddQuestionModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-zinc-900 border-2 rounded-lg p-6 w-[700px] max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-8 w-[700px] max-h-[90vh] overflow-y-auto">
               <h3 className="text-xl font-bold mb-4">Add New Question</h3>
               <form onSubmit={handleAddQuestion}>
                 <div className="space-y-4">
@@ -218,7 +205,7 @@ function BatchTeacher() {
                       <button
                         type="button"
                         onClick={addTestCase}
-                        className="px-2 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                        className="px-3 py-1 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
                       >
                         + Add Test Case
                       </button>
@@ -305,17 +292,17 @@ function BatchTeacher() {
                 </div>
 
                 {error && <div className="text-red-500 mt-2">{error}</div>}
-                <div className="flex justify-end gap-2 mt-4">
+                <div className="flex justify-end gap-4 mt-6">
                   <button
                     type="button"
                     onClick={() => setShowAddQuestionModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
                   >
                     Add Question
                   </button>

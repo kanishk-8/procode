@@ -42,50 +42,41 @@ function Batch() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-4 mt-24">
-        <h1 className="text-3xl font-bold mb-6">Batch: {batchId}</h1>
+    <div className="min-h-screen py-28 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold">Batch {batchId}</h1>
+        </div>
 
-        {/* Content Area - Questions */}
-        <div className="p-6 rounded-lg shadow-md">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Practice Questions</h2>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-lg">Loading questions...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center py-8 text-red-500">
-                <p>{error}</p>
-              </div>
-            ) : questions.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-lg">
-                  No questions available for this batch.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {questions.map((question) => (
-                  <Link
-                    to={`/codingSpace/${question.id}`}
-                    key={question.id}
-                    className="block"
-                  >
-                    <div className="p-5 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors duration-200 cursor-pointer">
-                      <h3 className="font-medium text-lg">{question.title}</h3>
-                    </div>
-                  </Link>
-                ))}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-xl text-zinc-400">Loading questions...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <p className="text-red-500">{error}</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {questions.map((question) => (
+              <Link
+                to={`/codingSpace/${question.id}`}
+                key={question.id}
+                className="block"
+              >
+                <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all">
+                  <h3 className="text-xl font-medium">{question.title}</h3>
+                </div>
+              </Link>
+            ))}
+            {questions.length === 0 && (
+              <div className="text-center py-12 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                <p className="text-xl text-zinc-400">No questions available</p>
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
-      <Outlet />
     </div>
   );
 }

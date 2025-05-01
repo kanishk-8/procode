@@ -325,11 +325,11 @@ const CodingSpace = () => {
             <button
               type="submit"
               disabled={submitting || !question}
-              className={`px-4 py-2 rounded-md ${
+              className={`px-6 py-3 ${
                 submitting || !question
-                  ? "bg-zinc-700 text-zinc-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
+                  ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
+                  : "bg-blue-500/10 text-blue-500 border border-blue-500/20 hover:bg-blue-500/20"
+              } rounded-full transition-colors shadow-lg`}
             >
               {submitting ? "Running..." : "Submit Solution"}
             </button>

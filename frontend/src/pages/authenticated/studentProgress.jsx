@@ -85,12 +85,17 @@ const dummyData = {
 
 const StudentProgress = () => {
   return (
-    <div className="min-h-screen py-24 px-8">
+    <div className="min-h-screen py-28 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Your Progress</h1>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-4">Your Progress</h1>
+          <p className="text-zinc-400">
+            Track your learning journey and performance
+          </p>
+        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
             <h3 className="text-zinc-400 text-sm mb-2">Total Assigned</h3>
             <p className="text-3xl font-bold">
@@ -118,7 +123,7 @@ const StudentProgress = () => {
         </div>
 
         {/* Progress Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
             <h2 className="text-xl font-bold mb-4">Overall Progress</h2>
             <div className="flex items-center justify-center">
@@ -139,7 +144,7 @@ const StudentProgress = () => {
 
         {/* Strength Areas */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Strength Areas</h2>
+          <h2 className="text-2xl font-bold mb-6">Strength Areas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {dummyData.strengthAreas.map((area) => (
               <div
@@ -163,7 +168,7 @@ const StudentProgress = () => {
 
         {/* Recent Questions */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Recent Questions</h2>
+          <h2 className="text-2xl font-bold mb-6">Recent Questions</h2>
           <div className="bg-zinc-900/50 rounded-lg border border-zinc-800">
             {dummyData.recentQuestions.map((question) => (
               <div
@@ -194,7 +199,7 @@ const StudentProgress = () => {
 
         {/* Saved Notes */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">Saved Notes</h2>
+          <h2 className="text-2xl font-bold mb-6">Saved Notes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {dummyData.savedNotes.map((note) => (
               <div

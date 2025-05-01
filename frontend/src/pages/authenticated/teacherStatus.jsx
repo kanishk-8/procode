@@ -164,19 +164,22 @@ const BarChart = ({ data }) => {
 };
 
 const TeacherStatus = () => {
-  const [loading, setLoading] = useState(false);
-
   return (
-    <div className="min-h-screen py-24 px-8">
+    <div className="min-h-screen py-28 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Teacher Dashboard</h1>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-4">Teacher Dashboard</h1>
+          <p className="text-zinc-400">
+            Monitor your classroom performance and student progress
+          </p>
+        </div>
 
         {/* Stats Overview with Circular Progress */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {Object.entries(dummyData.stats).map(([key, value]) => (
             <div
               key={key}
-              className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 flex flex-col items-center"
+              className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-6 hover:border-zinc-700 transition-all"
             >
               <CircularProgress
                 percentage={
@@ -206,13 +209,13 @@ const TeacherStatus = () => {
 
         {/* Performance and Activity Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
-            <h2 className="text-xl font-bold mb-6">Batch Performance</h2>
+          <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-6 hover:border-zinc-700 transition-all">
+            <h2 className="text-2xl font-bold mb-6">Batch Performance</h2>
             <BarChart data={dummyData.batchPerformance} />
           </div>
 
-          <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
-            <h2 className="text-xl font-bold mb-6">Recent Activity</h2>
+          <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-6 hover:border-zinc-700 transition-all">
+            <h2 className="text-2xl font-bold mb-6">Recent Activity</h2>
             <ActivityTimeline activities={dummyData.recentActivity} />
           </div>
         </div>
