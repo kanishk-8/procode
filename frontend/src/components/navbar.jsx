@@ -61,29 +61,46 @@ const Navbar = () => {
                 </ScrollLink>
               </>
             ) : (
-              <Link to="/" className="hover:text-gray-200 text-lg font-bold">
-                Home
+              <Link
+                to="/"
+                className="hover:text-gray-200 text-lg font-bold flex items-center"
+              >
+                <img
+                  src="/backButton.svg"
+                  alt="Logo"
+                  className="h-6 w-6 mr-2"
+                />
+                Back to Home
               </Link>
             )}
           </nav>
         ) : (
-          <nav className="flex space-x-10">
+          <nav className="flex space-x-6 mr-3">
             <Link
               to="/classroom"
               className="hover:text-gray-200 text-lg font-bold"
             >
               Classroom
             </Link>
-            {/* <Link
-              to="/dashboard"
-              className="hover:text-gray-200 flex items-center justify-center"
-            >
-              <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
-                <span className="text-lg font-bold text-zinc-400">
-                  {user.username?.charAt(0)?.toUpperCase() || "U"}
-                </span>
-              </div>
-            </Link> */}
+            <Link to="/blogs" className="hover:text-gray-200 text-lg font-bold">
+              Blogs
+            </Link>
+            {user.role === "student" && (
+              <Link
+                to="/progress"
+                className="hover:text-gray-200 text-lg font-bold"
+              >
+                Progress
+              </Link>
+            )}
+            {user.role === "teacher" && (
+              <Link
+                to="/teacher-status"
+                className="hover:text-gray-200 text-lg font-bold"
+              >
+                Status
+              </Link>
+            )}
           </nav>
         )}
       </div>
