@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/kanishk-8/procode/db"
 )
@@ -40,6 +42,9 @@ type AddQuestionRequest struct {
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	TestCases   []TestCase `json:"test_cases"`
+	TimeLimit   int        `json:"time_limit"` // Time limit in minutes
+	StartTime   string     `json:"start_time"` // Add start_time field
+	EndTime     string     `json:"end_time"`   // Add end_time field
 }
 
 func AddQuestionHandler(c *fiber.Ctx) error {
@@ -77,12 +82,56 @@ func AddQuestionHandler(c *fiber.Ctx) error {
 		}
 	}
 
+	// Parse start and end times if provided
+	var startTime, endTime *time.Time
+
+	// Handle datetime-local format (YYYY-MM-DDTHH:MM) from frontend
+	if req.StartTime != "" && req.StartTime != "null" {
+		// First try RFC3339 format
+		parsedStart, err := time.Parse(time.RFC3339, req.StartTime)
+		if err != nil {
+			// If RFC3339 fails, try the format from datetime-local input
+			parsedStart, err = time.Parse("2006-01-02T15:04", req.StartTime)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Invalid start time format: " + err.Error(),
+				})
+			}
+		}
+		startTime = &parsedStart
+	}
+
+	if req.EndTime != "" && req.EndTime != "null" {
+		// First try RFC3339 format
+		parsedEnd, err := time.Parse(time.RFC3339, req.EndTime)
+		if err != nil {
+			// If RFC3339 fails, try the format from datetime-local input
+			parsedEnd, err = time.Parse("2006-01-02T15:04", req.EndTime)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"message": "Invalid end time format: " + err.Error(),
+				})
+			}
+		}
+		endTime = &parsedEnd
+	}
+
+	// Validate that end time is after start time if both are provided
+	if startTime != nil && endTime != nil && !endTime.After(*startTime) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "End time must be after start time",
+		})
+	}
+
 	questionID, err := db.CreateQuestion(
 		userID,
 		req.BatchID,
 		req.Title,
 		req.Description,
 		dbTestCases,
+		req.TimeLimit,
+		startTime,
+		endTime,
 	)
 
 	if err != nil {

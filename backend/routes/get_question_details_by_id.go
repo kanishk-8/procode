@@ -2,6 +2,7 @@ package routes
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kanishk-8/procode/db"
@@ -49,12 +50,37 @@ func GetQuestionDetailsByIDHandler(c *fiber.Ctx) error {
 	}
 	userID := int64(userIDFloat)
 
+	// Check user role
+	role, ok := c.Locals("role").(string)
+	if !ok {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid role information",
+		})
+	}
+
 	// Call the DB function
 	questionWithTestCases, err := db.GetQuestionByID(userID, batchID, questionID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to get question details: " + err.Error(),
 		})
+	}
+
+	// If user is a student, check if the question's start time has passed
+	if role == "student" && questionWithTestCases.Question.StartTime != nil {
+		now := time.Now()
+		if now.Before(*questionWithTestCases.Question.StartTime) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"message": "This question is not available yet. It will be available from " + questionWithTestCases.Question.StartTime.String(),
+			})
+		}
+
+		// Check if the end time has passed
+		if questionWithTestCases.Question.EndTime != nil && now.After(*questionWithTestCases.Question.EndTime) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"message": "This question is no longer available. It ended at " + questionWithTestCases.Question.EndTime.String(),
+			})
+		}
 	}
 
 	// Return results

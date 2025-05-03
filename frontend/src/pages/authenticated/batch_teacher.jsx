@@ -9,6 +9,9 @@ function BatchTeacher() {
     title: "",
     description: "",
     test_cases: [{ input_text: "", expected_output: "", is_hidden: false }],
+    time_limit: 30, // Default time limit of 30 minutes
+    start_time: "", // Add start_time field
+    end_time: "",   // Add end_time field
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,6 +52,21 @@ function BatchTeacher() {
   const handleAddQuestion = async (e) => {
     e.preventDefault();
     try {
+      // Validate start and end times if both are provided
+      if (newQuestion.start_time && newQuestion.end_time) {
+        const startDate = new Date(newQuestion.start_time);
+        const endDate = new Date(newQuestion.end_time);
+        
+        if (endDate <= startDate) {
+          setError("End time must be after the start time");
+          return;
+        }
+      }
+      
+      // Format dates in ISO format if they exist
+      const formattedStartTime = newQuestion.start_time ? new Date(newQuestion.start_time).toISOString() : null;
+      const formattedEndTime = newQuestion.end_time ? new Date(newQuestion.end_time).toISOString() : null;
+
       const response = await fetch("http://localhost:8080/addquestion", {
         method: "POST",
         credentials: "include",
@@ -60,6 +78,9 @@ function BatchTeacher() {
           title: newQuestion.title,
           description: newQuestion.description,
           test_cases: newQuestion.test_cases,
+          time_limit: parseInt(newQuestion.time_limit) || 30,
+          start_time: formattedStartTime,
+          end_time: formattedEndTime,
         }),
       });
 
@@ -72,6 +93,9 @@ function BatchTeacher() {
         title: "",
         description: "",
         test_cases: [{ input_text: "", expected_output: "", is_hidden: false }],
+        time_limit: 30, // Reset to default
+        start_time: "", // Reset start_time
+        end_time: "",   // Reset end_time
       });
 
       fetchQuestions();
@@ -110,6 +134,16 @@ function BatchTeacher() {
         test_cases: updatedTestCases,
       });
     }
+  };
+
+  // Add form-level validation to datetime inputs
+  const validateDateRange = () => {
+    if (newQuestion.start_time && newQuestion.end_time) {
+      const startDate = new Date(newQuestion.start_time);
+      const endDate = new Date(newQuestion.end_time);
+      return endDate > startDate;
+    }
+    return true; // Valid if either field is empty
   };
 
   return (
@@ -195,6 +229,78 @@ function BatchTeacher() {
                       className="w-full border rounded p-2 h-32 bg-zinc-800"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Time Limit (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={newQuestion.time_limit}
+                      onChange={(e) =>
+                        setNewQuestion({
+                          ...newQuestion,
+                          time_limit: e.target.value,
+                        })
+                      }
+                      className="w-full border rounded p-2 bg-zinc-800"
+                      required
+                    />
+                  </div>
+                  
+                  {/* Add Schedule Fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Start Time (optional)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={newQuestion.start_time}
+                        onChange={(e) =>
+                          setNewQuestion({
+                            ...newQuestion,
+                            start_time: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded p-2 bg-zinc-800"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        When students can start solving this question
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        End Time (optional)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={newQuestion.end_time}
+                        onChange={(e) => {
+                          setNewQuestion({
+                            ...newQuestion,
+                            end_time: e.target.value,
+                          });
+                          // Clear error when user changes the end time
+                          if (error && error.includes("End time must be after")) {
+                            setError(null);
+                          }
+                        }}
+                        className={`w-full border rounded p-2 bg-zinc-800 ${
+                          !validateDateRange() ? "border-red-500" : ""
+                        }`}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        When the question will no longer be available
+                      </p>
+                      {!validateDateRange() && (
+                        <p className="text-xs text-red-500 mt-1">
+                          End time must be after start time
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-6">
@@ -302,7 +408,8 @@ function BatchTeacher() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    disabled={!validateDateRange()}
                   >
                     Add Question
                   </button>

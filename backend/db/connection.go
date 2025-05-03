@@ -106,6 +106,7 @@ func createTablesIfNotExist() error {
 	);`
 
 	// ✅ Updated: removed input_test_cases and expected_output from question table
+	// Updated: removed updated_at timestamp, added start_time and end_time
 	questionTable := `
 	CREATE TABLE IF NOT EXISTS question (
 		id INT AUTO_INCREMENT PRIMARY KEY,
@@ -113,8 +114,10 @@ func createTablesIfNotExist() error {
 		batch_id INT NOT NULL,
 		title VARCHAR(255) NOT NULL,
 		description TEXT,
+		time_limit INT DEFAULT 30, 
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		start_time DATETIME,
+		end_time DATETIME,
 		FOREIGN KEY (teacher_id) REFERENCES teacher(id) ON DELETE CASCADE,
 		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE
 	);`

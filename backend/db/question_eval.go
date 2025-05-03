@@ -14,14 +14,15 @@ import (
 )
 
 // Language IDs for Judge0 API
-const (
-	PYTHON3 = 71
-	GO      = 60
-	JAVA    = 62
-	CPP     = 54
-	C       = 50
-	// Add more languages as needed
-)
+// const (
+// 	PYTHON3    = 71
+// 	GO         = 60
+// 	JAVA       = 62
+// 	CPP        = 54
+// 	C          = 50
+// 	JAVASCRIPT = 63
+// 	// Add more languages as needed
+// )
 
 // TestResult represents the result of a single test case
 type TestResult struct {
@@ -147,8 +148,11 @@ func EvaluateCode(userID int64, questionID int64, code string, languageID int) (
 		TestResults: make([]TestResult, 0, len(testCases)),
 	}
 
-	for _, tc := range testCases {
-		testResult, err := runTestCase(apiURL, apiKey, code, languageID, tc.Input, tc.ExpectedOutput, tc.IsHidden)
+	// Run the first test case
+	if len(testCases) > 0 {
+		firstTestCase := testCases[0]
+		testResult, err := runTestCase(apiURL, apiKey, code, languageID,
+			firstTestCase.Input, firstTestCase.ExpectedOutput, firstTestCase.IsHidden)
 		if err != nil {
 			return nil, fmt.Errorf("error running test case: %w", err)
 		}
@@ -156,6 +160,44 @@ func EvaluateCode(userID int64, questionID int64, code string, languageID int) (
 		result.TestResults = append(result.TestResults, testResult)
 		if testResult.Status == "PASS" {
 			result.PassedTests++
+		}
+
+		// If the first test case has an error, don't run the rest
+		if testResult.Error != "" {
+			// Add remaining test cases as NOT_EVALUATED
+			for i := 1; i < len(testCases); i++ {
+				tc := testCases[i]
+				notEvaluatedResult := TestResult{
+					Status:         "NOT_EVALUATED",
+					Input:          tc.Input,
+					ExpectedOutput: tc.ExpectedOutput,
+					IsHidden:       tc.IsHidden,
+					ActualOutput:   "",
+					Error:          "Not evaluated due to error in first test case",
+				}
+
+				// Don't include input and expected output for hidden test cases
+				if tc.IsHidden {
+					notEvaluatedResult.Input = ""
+					notEvaluatedResult.ExpectedOutput = ""
+				}
+
+				result.TestResults = append(result.TestResults, notEvaluatedResult)
+			}
+		} else {
+			// Process the remaining test cases only if the first one didn't have errors
+			for i := 1; i < len(testCases); i++ {
+				tc := testCases[i]
+				testResult, err := runTestCase(apiURL, apiKey, code, languageID, tc.Input, tc.ExpectedOutput, tc.IsHidden)
+				if err != nil {
+					return nil, fmt.Errorf("error running test case: %w", err)
+				}
+
+				result.TestResults = append(result.TestResults, testResult)
+				if testResult.Status == "PASS" {
+					result.PassedTests++
+				}
+			}
 		}
 	}
 
@@ -243,7 +285,7 @@ func runTestCase(apiURL, apiKey, code string, languageID int, input, expectedOut
 	if result.Status.ID != 3 { // 3 is the status ID for "Accepted" in Judge0
 		// There was some error
 		errorOutput := ""
-		
+
 		// Prioritize error messages in this order
 		if result.CompileOutput != "" {
 			errorOutput = result.CompileOutput
@@ -254,7 +296,7 @@ func runTestCase(apiURL, apiKey, code string, languageID int, input, expectedOut
 		} else {
 			errorOutput = "Execution error: " + result.Status.Description
 		}
-		
+
 		testResult.Status = "FAIL"
 		testResult.Error = errorOutput
 		return testResult, nil

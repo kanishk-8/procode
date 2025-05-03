@@ -8,16 +8,6 @@ import (
 	"time"
 )
 
-var ist *time.Location
-
-func init() {
-	var err error
-	ist, err = time.LoadLocation("Asia/Kolkata")
-	if err != nil {
-		log.Fatalf("could not load IST location: %v", err)
-	}
-}
-
 type BatchData struct {
 	ID        int64
 	Name      string
@@ -55,31 +45,31 @@ func CreateBatch(name string, userID int64) (int64, error) {
 }
 
 // GetBatch fetches a single batch by ID
-func GetBatch(batchID int64) (*BatchData, error) {
-	query := `
-		SELECT id, name, teacher_id, created_at, is_active
-		FROM batch
-		WHERE id = ?
-	`
+// func GetBatch(batchID int64) (*BatchData, error) {
+// 	query := `
+// 		SELECT id, name, teacher_id, created_at, is_active
+// 		FROM batch
+// 		WHERE id = ?
+// 	`
 
-	var batch BatchData
-	err := Con.QueryRow(query, batchID).Scan(
-		&batch.ID,
-		&batch.Name,
-		&batch.TeacherID,
-		&batch.CreatedAt,
-		&batch.IsActive,
-	)
+// 	var batch BatchData
+// 	err := Con.QueryRow(query, batchID).Scan(
+// 		&batch.ID,
+// 		&batch.Name,
+// 		&batch.TeacherID,
+// 		&batch.CreatedAt,
+// 		&batch.IsActive,
+// 	)
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("batch not found")
-		}
-		return nil, fmt.Errorf("error fetching batch: %w", err)
-	}
+// 	if err != nil {
+// 		if err == sql.ErrNoRows {
+// 			return nil, errors.New("batch not found")
+// 		}
+// 		return nil, fmt.Errorf("error fetching batch: %w", err)
+// 	}
 
-	return &batch, nil
-}
+// 	return &batch, nil
+// }
 
 func GetBatchesByTeacher(userID int64) ([]*BatchData, error) {
 	// First, get the teacher ID from the user ID
@@ -118,7 +108,6 @@ func GetBatchesByTeacher(userID int64) ([]*BatchData, error) {
 			return nil, fmt.Errorf("error scanning batch row: %w", err)
 		}
 
-		batch.CreatedAt = batch.CreatedAt.In(ist)
 		log.Println(batch.CreatedAt)
 		batches = append(batches, &batch)
 	}
@@ -168,7 +157,6 @@ func GetBatchesByStudent(userID int64) ([]*BatchData, error) {
 			return nil, fmt.Errorf("error scanning batch row: %w", err)
 		}
 
-		batch.CreatedAt = batch.CreatedAt.In(ist)
 		batches = append(batches, &batch)
 	}
 

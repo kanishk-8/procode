@@ -230,6 +230,8 @@ const CodingSpace = () => {
                         className={`p-3 rounded-md ${
                           result.status === "PASS"
                             ? "bg-green-900/30"
+                            : result.status === "NOT_EVALUATED"
+                            ? "bg-gray-900/30"
                             : "bg-red-900/30"
                         }`}
                       >
@@ -239,6 +241,8 @@ const CodingSpace = () => {
                             className={
                               result.status === "PASS"
                                 ? "text-green-400"
+                                : result.status === "NOT_EVALUATED"
+                                ? "text-gray-400"
                                 : "text-red-400"
                             }
                           >
@@ -246,7 +250,11 @@ const CodingSpace = () => {
                           </span>
                         </div>
 
-                        {result.status !== "PASS" && (
+                        {result.status === "NOT_EVALUATED" ? (
+                          <div className="mt-2 text-sm text-gray-400">
+                            {result.error || "Test case was not evaluated"}
+                          </div>
+                        ) : result.status !== "PASS" && (
                           <div className="mt-2 text-sm">
                             {result.error ? (
                               // Display runtime or compilation error

@@ -13,8 +13,10 @@ type QuestionData struct {
 	BatchID     int64
 	Title       string
 	Description string
+	TimeLimit   int // Time limit in minutes
 	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	StartTime   *time.Time // Add StartTime field
+	EndTime     *time.Time // Add EndTime field
 }
 
 type TestCaseData struct {
@@ -34,8 +36,11 @@ type TestCase struct {
 }
 
 type QuestionBasicInfo struct {
-	ID    int64  `json:"id"`
-	Title string `json:"title"`
+	ID        int64      `json:"id"`
+	Title     string     `json:"title"`
+	TimeLimit int        `json:"timeLimit"`
+	StartTime *time.Time `json:"startTime"`
+	EndTime   *time.Time `json:"endTime"`
 }
 
 type QuestionWithTestCases struct {
@@ -43,7 +48,7 @@ type QuestionWithTestCases struct {
 	TestCases []TestCaseData
 }
 
-func CreateQuestion(userID int64, batchID int64, title, description string, testCases []TestCase) (int64, error) {
+func CreateQuestion(userID int64, batchID int64, title, description string, testCases []TestCase, timeLimit int, startTime, endTime *time.Time) (int64, error) {
 	var teacherID int64
 	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
 	if err != nil {
@@ -77,12 +82,13 @@ func CreateQuestion(userID int64, batchID int64, title, description string, test
 		}
 	}()
 
+	// Update query to include start_time and end_time
 	questionQuery := `
-		INSERT INTO question (teacher_id, batch_id, title, description)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO question (teacher_id, batch_id, title, description, time_limit, start_time, end_time)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
-	result, err := tx.Exec(questionQuery, teacherID, batchID, title, description)
+	result, err := tx.Exec(questionQuery, teacherID, batchID, title, description, timeLimit, startTime, endTime)
 	if err != nil {
 		return 0, fmt.Errorf("error creating question: %w", err)
 	}
@@ -154,7 +160,13 @@ func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, erro
 		}
 	}
 
-	rows, err := Con.Query("SELECT id, title FROM question WHERE batch_id = ?", batchID)
+	// Changed from ORDER BY created_at DESC to order by start_time
+	rows, err := Con.Query(`
+		SELECT id, title, time_limit, start_time, end_time 
+		FROM question 
+		WHERE batch_id = ? 
+		ORDER BY CASE WHEN start_time IS NULL THEN 0 ELSE 1 END, start_time DESC
+	`, batchID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying questions: %w", err)
 	}
@@ -163,7 +175,7 @@ func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, erro
 	var questions []QuestionBasicInfo
 	for rows.Next() {
 		var q QuestionBasicInfo
-		if err := rows.Scan(&q.ID, &q.Title); err != nil {
+		if err := rows.Scan(&q.ID, &q.Title, &q.TimeLimit, &q.StartTime, &q.EndTime); err != nil {
 			return nil, fmt.Errorf("error scanning question row: %w", err)
 		}
 		questions = append(questions, q)
@@ -232,11 +244,11 @@ func GetQuestionByID(userID int64, batchID int64, questionID int64) (*QuestionWi
 	// Get question details
 	var question QuestionData
 	err = Con.QueryRow(`
-		SELECT id, teacher_id, batch_id, title, description, created_at, updated_at 
+		SELECT id, teacher_id, batch_id, title, description, time_limit, created_at, start_time, end_time 
 		FROM question 
 		WHERE id = ?`, questionID).Scan(
 		&question.ID, &question.TeacherID, &question.BatchID,
-		&question.Title, &question.Description, &question.CreatedAt, &question.UpdatedAt)
+		&question.Title, &question.Description, &question.TimeLimit, &question.CreatedAt, &question.StartTime, &question.EndTime)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving question: %w", err)
 	}
