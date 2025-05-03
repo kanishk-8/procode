@@ -32,6 +32,10 @@ const CodingSpace = () => {
   const [navigationDestination, setNavigationDestination] = useState(null);
   const [testInProgress, setTestInProgress] = useState(false);
 
+  // Tab switch warning states
+  const [warningCount, setWarningCount] = useState(0);
+  const [showTabWarning, setShowTabWarning] = useState(false);
+
   // Submission confirmation modal state
   const [showSubmitConfirmation, setShowSubmitConfirmation] = useState(false);
 
@@ -109,6 +113,45 @@ const CodingSpace = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [testInProgress, submitting, error, navigator, batchId]);
+
+  // Set up tab switch detection system
+  useEffect(() => {
+    // Only add the listener if a test is in progress
+    if (!testInProgress || submitting || error) return;
+
+    // Initialize warning count from localStorage if it exists
+    const storedWarningCount = localStorage.getItem(`tabWarnings_${questionId}`);
+    if (storedWarningCount) {
+      setWarningCount(parseInt(storedWarningCount, 10));
+    }
+
+    // Handle tab/window visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // User switched away from the tab
+        const newWarningCount = warningCount + 1;
+        setWarningCount(newWarningCount);
+        
+        // Store the updated warning count in localStorage
+        localStorage.setItem(`tabWarnings_${questionId}`, newWarningCount.toString());
+        
+        // Auto-submit after 3 warnings
+        if (newWarningCount >= 3) {
+          // Submit the test automatically on the 3rd warning
+          handleFinalSubmit();
+        } else {
+          // Show warning when tab becomes visible again
+          setTimeout(() => setShowTabWarning(true), 500);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [testInProgress, submitting, error, warningCount, questionId]);
 
   // Fetch question details when component mounts
   useEffect(() => {
@@ -223,7 +266,16 @@ const CodingSpace = () => {
       // Start the timer
       setTimeRemaining(remainingSeconds);
       setTimerActive(true);
+      
+      // Ensure we clear any existing interval before starting a new one
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+      
+      // Explicitly start the timer interval
       startTimer(remainingSeconds);
+      
+      console.log("Timer started with", remainingSeconds, "seconds remaining");
     }
   };
 
@@ -234,18 +286,24 @@ const CodingSpace = () => {
     }
 
     setTimeRemaining(initialSeconds);
+    setTimerActive(true); // Ensure timer is marked as active
 
     timerIntervalRef.current = setInterval(() => {
       setTimeRemaining((prevTime) => {
         if (prevTime <= 1) {
           // Time's up
           clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+          setTimerActive(false);
           handleFinalSubmit();
           return 0;
         }
         return prevTime - 1;
       });
     }, 1000);
+    
+    // Add console log for debugging
+    console.log("Timer interval started:", timerIntervalRef.current);
   };
 
   // Format the time as mm:ss
@@ -421,6 +479,11 @@ const CodingSpace = () => {
   const cancelNavigation = () => {
     setShowNavigationWarning(false);
     setNavigationDestination(null);
+  };
+
+  // Function to dismiss tab warning
+  const dismissTabWarning = () => {
+    setShowTabWarning(false);
   };
 
   return (
@@ -704,6 +767,30 @@ const CodingSpace = () => {
                 className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
               >
                 Submit & Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Switch Warning Modal */}
+      {showTabWarning && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4 text-amber-500">Tab Switch Warning</h3>
+            <p className="mb-4 text-gray-300">
+              We detected that you switched away from this tab. This is considered as potential
+              cheating behavior.
+            </p>
+            <p className="mb-6 font-medium">
+              Warning {warningCount} of 3. Your test will be automatically submitted after 3 warnings.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={dismissTabWarning}
+                className="px-6 py-3 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full hover:bg-amber-500/20 transition-colors shadow-lg"
+              >
+                I Understand
               </button>
             </div>
           </div>

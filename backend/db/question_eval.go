@@ -266,15 +266,19 @@ func EvaluateCode(userID int64, questionID int64, code string, languageID int, c
 		}
 	}
 
-	// 11. Update the attempt record instead of creating a new one
-	_, err = Con.Exec(`
-		UPDATE attempt 
-		SET submitted_code = ?, status = ?, score = ?, end_time = ?, time_taken_seconds = ?, attempted = ?
-		WHERE id = ?`,
-		code, status, score, endTime, timeTaken, calculateScore, attemptID)
-	if err != nil {
-		return nil, fmt.Errorf("error updating attempt: %w", err)
+	// 11. Update the attempt record only if this is a final submission
+	if calculateScore {
+		// Final submission - update all fields including end_time
+		_, err = Con.Exec(`
+			UPDATE attempt 
+			SET submitted_code = ?, status = ?, score = ?, end_time = ?, time_taken_seconds = ?, attempted = ?
+			WHERE id = ?`,
+			code, status, score, endTime, timeTaken, calculateScore, attemptID)
+		if err != nil {
+			return nil, fmt.Errorf("error updating attempt: %w", err)
+		}
 	}
+	// No else block - we don't update the attempt table at all when calculateScore is false
 
 	return &result, nil
 }
