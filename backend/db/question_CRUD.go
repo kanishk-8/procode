@@ -48,6 +48,20 @@ type QuestionWithTestCases struct {
 	TestCases []TestCaseData
 }
 
+// Add new structs to contain attempt information
+type AttemptInfo struct {
+	ID            int64     `json:"id"`
+	StartTime     time.Time `json:"startTime"`
+	TimeTakenSecs int       `json:"timeTakenSecs"`
+	Status        string    `json:"status"`
+}
+
+type QuestionWithTestCasesAndAttempt struct {
+	Question  QuestionData
+	TestCases []TestCaseData
+	Attempt   *AttemptInfo
+}
+
 func CreateQuestion(userID int64, batchID int64, title, description string, testCases []TestCase, timeLimit int, startTime, endTime *time.Time) (int64, error) {
 	var teacherID int64
 	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
@@ -188,50 +202,31 @@ func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, erro
 	return questions, nil
 }
 
-func GetQuestionByID(userID int64, batchID int64, questionID int64) (*QuestionWithTestCases, error) {
-	// Check if user is a teacher
-	var teacherID int64
-	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
-	if err == nil {
-		// User is a teacher, check if they own the batch
-		var exists bool
-		err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM batch WHERE id = ? AND teacher_id = ?)",
-			batchID, teacherID).Scan(&exists)
-		if err != nil {
-			return nil, fmt.Errorf("error checking batch ownership: %w", err)
+func GetQuestionByID(userID int64, batchID int64, questionID int64) (*QuestionWithTestCasesAndAttempt, error) {
+	// Check if user is a student (teachers cannot access this function)
+	var studentID int64
+	err := Con.QueryRow("SELECT id FROM student WHERE user_id = ?", userID).Scan(&studentID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("only students can access this function")
 		}
-		if !exists {
-			return nil, errors.New("batch not found or you don't have permission to access it")
-		}
-	} else if err != sql.ErrNoRows {
-		return nil, fmt.Errorf("error querying database: %w", err)
-	} else {
-		// User is not a teacher, check if they are a student in this batch
-		var studentID int64
-		err = Con.QueryRow("SELECT id FROM student WHERE user_id = ?", userID).Scan(&studentID)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return nil, errors.New("user is neither a teacher nor a student")
-			}
-			return nil, fmt.Errorf("error finding student: %w", err)
-		}
+		return nil, fmt.Errorf("error finding student: %w", err)
+	}
 
-		// Check if student is enrolled in the batch
-		var exists bool
-		err = Con.QueryRow(`
-			SELECT EXISTS(SELECT 1 FROM batch_student 
-			WHERE batch_id = ? AND student_id = ?)`,
-			batchID, studentID).Scan(&exists)
-		if err != nil {
-			return nil, fmt.Errorf("error checking batch enrollment: %w", err)
-		}
-		if !exists {
-			return nil, errors.New("you are not enrolled in this batch")
-		}
+	// Check if student is enrolled in the batch
+	var exists bool
+	err = Con.QueryRow(`
+		SELECT EXISTS(SELECT 1 FROM batch_student 
+		WHERE batch_id = ? AND student_id = ?)`,
+		batchID, studentID).Scan(&exists)
+	if err != nil {
+		return nil, fmt.Errorf("error checking batch enrollment: %w", err)
+	}
+	if !exists {
+		return nil, errors.New("you are not enrolled in this batch")
 	}
 
 	// Validate question exists in the batch
-	var exists bool
 	err = Con.QueryRow("SELECT EXISTS(SELECT 1 FROM question WHERE id = ? AND batch_id = ?)",
 		questionID, batchID).Scan(&exists)
 	if err != nil {
@@ -277,8 +272,48 @@ func GetQuestionByID(userID int64, batchID int64, questionID int64) (*QuestionWi
 		return nil, fmt.Errorf("error iterating test case rows: %w", err)
 	}
 
-	return &QuestionWithTestCases{
+	// Check for an existing in-progress attempt
+	var attemptInfo AttemptInfo
+
+	err = Con.QueryRow(`
+		SELECT id, start_time, IFNULL(time_taken_seconds, 0), status
+		FROM attempt
+		WHERE student_id = ? AND question_id = ? AND status = 'in_progress'
+		ORDER BY id DESC
+		LIMIT 1
+	`, studentID, questionID).Scan(&attemptInfo.ID, &attemptInfo.StartTime, &attemptInfo.TimeTakenSecs, &attemptInfo.Status)
+
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, fmt.Errorf("error checking existing attempt: %w", err)
+		}
+
+		// No existing attempt found, create a new one with current time as start time
+		// This only happens the first time a student accesses the question
+		now := time.Now()
+		result, err := Con.Exec(`
+			INSERT INTO attempt (student_id, question_id, status, start_time)
+			VALUES (?, ?, 'in_progress', ?)
+		`, studentID, questionID, now)
+		if err != nil {
+			return nil, fmt.Errorf("error creating attempt record: %w", err)
+		}
+
+		attemptID, err := result.LastInsertId()
+		if err != nil {
+			return nil, fmt.Errorf("error getting new attempt ID: %w", err)
+		}
+
+		attemptInfo.ID = attemptID
+		attemptInfo.StartTime = now
+		attemptInfo.TimeTakenSecs = 0
+		attemptInfo.Status = "in_progress"
+	}
+	// Note: If an attempt already exists, we use it without modification to preserve the original start time
+
+	return &QuestionWithTestCasesAndAttempt{
 		Question:  question,
 		TestCases: testCases,
+		Attempt:   &attemptInfo,
 	}, nil
 }

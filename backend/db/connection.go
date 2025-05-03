@@ -141,7 +141,11 @@ func createTablesIfNotExist() error {
 		student_id INT NOT NULL,
 		question_id INT NOT NULL,
 		submitted_code TEXT,
-		status ENUM('correct', 'incorrect', 'partially_correct') NOT NULL,
+		score INT DEFAULT 0,
+		status ENUM('correct', 'incorrect', 'partially_correct', 'in_progress', 'timed_out') NOT NULL,
+		start_time TIMESTAMP,
+		end_time TIMESTAMP,
+		time_taken_seconds INT,
 		submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE,
 		FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE

@@ -32,7 +32,6 @@ func GetQuestionDetailsByIDHandler(c *fiber.Ctx) error {
 			"message": "Invalid batch ID format",
 		})
 	}
-
 	// Parse questionID to int64
 	questionID, err := strconv.ParseInt(questionIDStr, 10, 64)
 	if err != nil {
@@ -50,14 +49,6 @@ func GetQuestionDetailsByIDHandler(c *fiber.Ctx) error {
 	}
 	userID := int64(userIDFloat)
 
-	// Check user role
-	role, ok := c.Locals("role").(string)
-	if !ok {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid role information",
-		})
-	}
-
 	// Call the DB function
 	questionWithTestCases, err := db.GetQuestionByID(userID, batchID, questionID)
 	if err != nil {
@@ -66,8 +57,8 @@ func GetQuestionDetailsByIDHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// If user is a student, check if the question's start time has passed
-	if role == "student" && questionWithTestCases.Question.StartTime != nil {
+	// Since only students can access this route, always check the time constraints
+	if questionWithTestCases.Question.StartTime != nil {
 		now := time.Now()
 		if now.Before(*questionWithTestCases.Question.StartTime) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
