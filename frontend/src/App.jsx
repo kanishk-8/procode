@@ -12,6 +12,7 @@ import ClassRoom from "./pages/authenticated/classroom";
 import BatchTeacher from "./pages/authenticated/batch_teacher";
 import EvalStudentDetail from "./pages/authenticated/evalStudentDetail";
 import Blogs from "./pages/authenticated/blogs";
+import BlogDetail from "./pages/authenticated/blogDetail";
 import StudentProgress from "./pages/authenticated/studentProgress";
 import TeacherStatus from "./pages/authenticated/teacherStatus";
 
@@ -76,6 +77,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Blogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/blog/:blogId"
+          element={
+            <ProtectedRoute>
+              <BlogDetail />
             </ProtectedRoute>
           }
         />

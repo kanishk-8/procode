@@ -21,4 +21,12 @@ func RegisterRoutes(app *fiber.App) {
 	app.Get("/getquestionsbybatch/:batchID", middleware.RequireAuth, GetQuestionsByBatchHandler)
 	app.Get("/getquestiondetailsbyid/:batchID/:questionID", middleware.RequireStudentAuth, GetQuestionDetailsByIDHandler)
 	app.Post("/evalques", middleware.RequireStudentAuth, CodeEvaluateHandler)
+
+	// Blog routes
+	app.Post("/blog", middleware.RequireAuth, CreateBlogHandler)
+	app.Get("/blog/:blogID", GetBlogByIDHandler)
+	app.Get("/blogs", ListBlogsHandler)
+	app.Put("/blog/verify", middleware.RequireTeacherAuth, VerifyBlogHandler)
+	app.Delete("/blog", middleware.RequireAuth, DeleteBlogHandler)
+	app.Post("/blog/request-deletion", middleware.RequireTeacherAuth, RequestBlogDeletionHandler)
 }

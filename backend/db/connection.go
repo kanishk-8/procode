@@ -105,8 +105,6 @@ func createTablesIfNotExist() error {
 		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE
 	);`
 
-	// ✅ Updated: removed input_test_cases and expected_output from question table
-	// Updated: removed updated_at timestamp, added start_time and end_time
 	questionTable := `
 	CREATE TABLE IF NOT EXISTS question (
 		id INT AUTO_INCREMENT PRIMARY KEY,
@@ -122,7 +120,6 @@ func createTablesIfNotExist() error {
 		FOREIGN KEY (batch_id) REFERENCES batch(id) ON DELETE CASCADE
 	);`
 
-	// ✅ NEW TABLE: test_case
 	testCaseTable := `
 	CREATE TABLE IF NOT EXISTS test_case (
 		id INT AUTO_INCREMENT PRIMARY KEY,
@@ -152,10 +149,38 @@ func createTablesIfNotExist() error {
 		FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE
 	);`
 
-	// Added testCaseTable in the list ✅
+	blogTable := `
+	CREATE TABLE IF NOT EXISTS blog (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		content TEXT NOT NULL,
+		excerpt VARCHAR(255),
+		image_url VARCHAR(255),
+		status ENUM('pending', 'verified', 'rejected', 'delete_requested') DEFAULT 'pending',
+		verified_by INT,
+		deletion_requested_by INT,
+		deletion_message TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+		FOREIGN KEY (verified_by) REFERENCES user(id) ON DELETE SET NULL,
+		FOREIGN KEY (deletion_requested_by) REFERENCES user(id) ON DELETE SET NULL
+	);`
+
+	blogTagTable := `
+	CREATE TABLE IF NOT EXISTS blog_tag (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		blog_id INT NOT NULL,
+		tag_name VARCHAR(50) NOT NULL,
+		FOREIGN KEY (blog_id) REFERENCES blog(id) ON DELETE CASCADE,
+		UNIQUE KEY (blog_id, tag_name)
+	);`
+
 	tables := []string{
 		userTable, studentTable, teacherTable, batchTable,
 		batchStudentTable, noteTable, questionTable, testCaseTable, attemptTable,
+		blogTable, blogTagTable,
 	}
 
 	for _, table := range tables {
