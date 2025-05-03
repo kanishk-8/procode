@@ -70,6 +70,37 @@ function Batch() {
     return true;
   };
 
+  // Helper function to get status badge color
+  const getStatusBadgeColor = (status) => {
+    switch (status) {
+      case "correct":
+        return "bg-green-600";
+      case "partially_correct":
+        return "bg-yellow-600";
+      case "incorrect":
+      case "timed_out":
+        return "bg-red-600";
+      default:
+        return "bg-gray-600";
+    }
+  };
+
+  // Helper function to get formatted status text
+  const getStatusText = (status) => {
+    switch (status) {
+      case "correct":
+        return "Correct";
+      case "partially_correct":
+        return "Partially Correct";
+      case "incorrect":
+        return "Incorrect";
+      case "timed_out":
+        return "Timed Out";
+      default:
+        return "Unknown";
+    }
+  };
+
   return (
     <div className="min-h-screen py-28 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
@@ -95,7 +126,7 @@ function Batch() {
               const available = isQuestionAvailable(
                 question.startTime,
                 question.endTime
-              );
+              ) && !question.isAttempted;
               return (
                 <Link
                   to={
@@ -116,20 +147,29 @@ function Batch() {
                   >
                     <div className="flex justify-between items-start">
                       <h3 className="font-medium text-lg">{question.title}</h3>
-                      {!available &&
-                        question.startTime &&
-                        new Date(question.startTime) > new Date() && (
-                          <span className="bg-yellow-600 text-white px-2 py-1 rounded-md text-xs">
-                            Starts at {formatDateTime(question.startTime)}
+                      <div className="flex space-x-2">
+                        {question.isAttempted && (
+                          <span className={`${getStatusBadgeColor(question.status)} text-white px-2 py-1 rounded-md text-xs`}>
+                            {getStatusText(question.status)}
                           </span>
                         )}
-                      {!available &&
-                        question.endTime &&
-                        new Date(question.endTime) < new Date() && (
-                          <span className="bg-red-600 text-white px-2 py-1 rounded-md text-xs">
-                            Ended
-                          </span>
-                        )}
+                        {!available &&
+                          !question.isAttempted &&
+                          question.startTime &&
+                          new Date(question.startTime) > new Date() && (
+                            <span className="bg-yellow-600 text-white px-2 py-1 rounded-md text-xs">
+                              Starts at {formatDateTime(question.startTime)}
+                            </span>
+                          )}
+                        {!available &&
+                          !question.isAttempted &&
+                          question.endTime &&
+                          new Date(question.endTime) < new Date() && (
+                            <span className="bg-red-600 text-white px-2 py-1 rounded-md text-xs">
+                              Ended
+                            </span>
+                          )}
+                      </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-300">
                       {question.timeLimit ? (
@@ -142,6 +182,9 @@ function Batch() {
                       )}
                       {question.endTime && (
                         <p>End: {formatDateTime(question.endTime)}</p>
+                      )}
+                      {question.isAttempted && (
+                        <p className="mt-1 text-gray-400">You've already attempted this question</p>
                       )}
                     </div>
                   </div>

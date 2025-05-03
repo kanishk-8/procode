@@ -36,11 +36,14 @@ type TestCase struct {
 }
 
 type QuestionBasicInfo struct {
-	ID        int64      `json:"id"`
-	Title     string     `json:"title"`
-	TimeLimit int        `json:"timeLimit"`
-	StartTime *time.Time `json:"startTime"`
-	EndTime   *time.Time `json:"endTime"`
+	ID          int64      `json:"id"`
+	Title       string     `json:"title"`
+	TimeLimit   int        `json:"timeLimit"`
+	StartTime   *time.Time `json:"startTime"`
+	EndTime     *time.Time `json:"endTime"`
+	IsAttempted bool       `json:"isAttempted"` // New field to track if question is attempted
+	Status      string     `json:"status"`      // New field to track attempt status
+	Score       *int       `json:"score"`       // New field to track score of attempted question
 }
 
 type QuestionWithTestCases struct {
@@ -174,6 +177,17 @@ func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, erro
 		}
 	}
 
+	var studentID int64
+	var isStudent bool
+
+	// Check if user is a student to check attempt status
+	err = Con.QueryRow("SELECT id FROM student WHERE user_id = ?", userID).Scan(&studentID)
+	if err == nil {
+		isStudent = true
+	} else if err != sql.ErrNoRows {
+		return nil, fmt.Errorf("error finding student: %w", err)
+	}
+
 	// Changed from ORDER BY created_at DESC to order by start_time
 	rows, err := Con.Query(`
 		SELECT id, title, time_limit, start_time, end_time 
@@ -192,6 +206,26 @@ func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, erro
 		if err := rows.Scan(&q.ID, &q.Title, &q.TimeLimit, &q.StartTime, &q.EndTime); err != nil {
 			return nil, fmt.Errorf("error scanning question row: %w", err)
 		}
+
+		// Check if the question has been attempted by this student
+		if isStudent {
+			var score int
+			err = Con.QueryRow(`
+				SELECT status, score FROM attempt 
+				WHERE student_id = ? AND question_id = ? 
+				AND attempted = TRUE
+				ORDER BY id DESC LIMIT 1
+			`, studentID, q.ID).Scan(&q.Status, &score)
+
+			if err == nil {
+				// Found a completed attempt
+				q.IsAttempted = true
+				q.Score = &score
+			} else if err != sql.ErrNoRows {
+				return nil, fmt.Errorf("error checking attempt status: %w", err)
+			}
+		}
+
 		questions = append(questions, q)
 	}
 
@@ -224,6 +258,23 @@ func GetQuestionByID(userID int64, batchID int64, questionID int64) (*QuestionWi
 	}
 	if !exists {
 		return nil, errors.New("you are not enrolled in this batch")
+	}
+
+	// Check if the question has been already fully attempted and completed
+	var attemptExists bool
+	err = Con.QueryRow(`
+		SELECT EXISTS(SELECT 1 FROM attempt 
+		WHERE student_id = ? AND question_id = ? 
+		AND attempted = TRUE)
+	`, studentID, questionID).Scan(&attemptExists)
+
+	if err != nil {
+		return nil, fmt.Errorf("error checking attempt status: %w", err)
+	}
+
+	if attemptExists {
+		// Question has already been attempted and completed
+		return nil, errors.New("question has already been attempted and cannot be accessed again")
 	}
 
 	// Validate question exists in the batch

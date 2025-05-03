@@ -146,6 +146,7 @@ func createTablesIfNotExist() error {
 		start_time TIMESTAMP,
 		end_time TIMESTAMP,
 		time_taken_seconds INT,
+		attempted BOOLEAN DEFAULT FALSE,
 		submission_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE,
 		FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE CASCADE

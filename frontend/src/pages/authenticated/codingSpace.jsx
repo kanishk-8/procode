@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, Outlet } from "react-router-dom";
+import { useParams, Outlet, useNavigate } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 
 const CodingSpace = () => {
@@ -14,6 +14,12 @@ const CodingSpace = () => {
   const [languageId, setLanguageId] = useState(71); // Default: Python (as number)
   const editorRef = useRef(null);
   const [outputMessage, setOutputMessage] = useState("");
+  const navigate = useNavigate();
+  
+  // Timer states
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [timerActive, setTimerActive] = useState(false);
+  const timerIntervalRef = useRef(null);
 
   // Language mapping for Monaco Editor
   const languageMap = {
@@ -36,13 +42,17 @@ const CodingSpace = () => {
   // Fetch question details when component mounts
   useEffect(() => {
     fetchQuestionDetails();
+    return () => {
+      // Clear timer interval on unmount
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
   }, [questionId]);
 
   const fetchQuestionDetails = async () => {
     try {
       setLoading(true);
-      // We need to get batch ID from the URL or from local storage
-      // For now, we'll use a fixed batchId of 1
       const response = await fetch(
         `http://localhost:8080/getquestiondetailsbyid/${batchId}/${questionId}`,
         {
@@ -51,7 +61,17 @@ const CodingSpace = () => {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch question details");
+        const errorData = await response.json();
+        // Check if this is due to the question being already attempted
+        if (errorData.message && errorData.message.includes("already been attempted")) {
+          setError("This question has already been attempted and cannot be accessed again.");
+          // Navigate back to batch page after 3 seconds
+          setTimeout(() => {
+            navigate(`/batch/${batchId}`);
+          }, 3000);
+          return;
+        }
+        throw new Error(errorData.message || "Failed to fetch question details");
       }
 
       const data = await response.json();
@@ -59,6 +79,11 @@ const CodingSpace = () => {
       if (data.data) {
         setQuestion(data.data.Question);
         setTestCases(data.data.TestCases);
+        
+        // Initialize timer based on API response
+        if (data.data.Question.TimeLimit && data.data.Attempt) {
+          initializeTimer(data.data.Question.TimeLimit, data.data.Attempt);
+        }
       } else {
         throw new Error("No question data returned");
       }
@@ -70,6 +95,81 @@ const CodingSpace = () => {
     }
   };
 
+  // Initialize timer based on time limit and attempt information
+  const initializeTimer = (timeLimit, attempt) => {
+    // Try to get stored timer data from localStorage
+    const storedData = localStorage.getItem(`timer_${questionId}`);
+    let startTime;
+    let elapsedSeconds = 0;
+    
+    if (storedData) {
+      const parsedData = JSON.parse(storedData);
+      startTime = new Date(parsedData.startTime);
+      elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
+    } else if (attempt && attempt.StartTime) {
+      // If no stored data, use the attempt start time from the API
+      startTime = new Date(attempt.StartTime);
+      elapsedSeconds = attempt.TimeTakenSecs || 0;
+      
+      // Store the timer data in localStorage
+      localStorage.setItem(`timer_${questionId}`, JSON.stringify({
+        startTime: startTime,
+        timeLimit: timeLimit * 60 // Convert minutes to seconds
+      }));
+    } else {
+      // If no attempt data, use current time
+      startTime = new Date();
+      localStorage.setItem(`timer_${questionId}`, JSON.stringify({
+        startTime: startTime,
+        timeLimit: timeLimit * 60 // Convert minutes to seconds
+      }));
+    }
+    
+    // Calculate remaining time in seconds
+    const totalSeconds = timeLimit * 60; // Convert minutes to seconds
+    const remainingSeconds = totalSeconds - elapsedSeconds;
+    
+    if (remainingSeconds <= 0) {
+      // Time already expired, auto-submit
+      setTimeRemaining(0);
+      handleFinalSubmit();
+    } else {
+      // Start the timer
+      setTimeRemaining(remainingSeconds);
+      setTimerActive(true);
+      startTimer(remainingSeconds);
+    }
+  };
+
+  // Start the timer countdown
+  const startTimer = (initialSeconds) => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+    
+    setTimeRemaining(initialSeconds);
+    
+    timerIntervalRef.current = setInterval(() => {
+      setTimeRemaining(prevTime => {
+        if (prevTime <= 1) {
+          // Time's up
+          clearInterval(timerIntervalRef.current);
+          handleFinalSubmit();
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+
+  // Format the time as mm:ss
+  const formatTime = (seconds) => {
+    if (seconds === null) return "--:--";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleEditorDidMount = (editor) => {
     editorRef.current = editor;
   };
@@ -79,6 +179,7 @@ const CodingSpace = () => {
     setLanguageId(newLanguageId);
   };
 
+  // Handle code execution without score calculation (Run Code button)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!editorRef.current) return;
@@ -108,6 +209,7 @@ const CodingSpace = () => {
           question_id: parseInt(questionId),
           code: code,
           language_id: languageId,
+          calculate_score: false
         }),
       });
 
@@ -144,6 +246,69 @@ const CodingSpace = () => {
     }
   };
 
+  // Handle final submission with score calculation
+  const handleFinalSubmit = async () => {
+    if (!editorRef.current) return;
+
+    try {
+      setSubmitting(true);
+      setOutputMessage("Submitting final solution...");
+
+      const code = editorRef.current.getValue();
+
+      const response = await fetch("http://localhost:8080/evalques", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question_id: parseInt(questionId),
+          code: code,
+          language_id: languageId,
+          calculate_score: true
+        }),
+      });
+
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        throw new Error(`Failed to parse response: ${responseText}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to submit solution");
+      }
+
+      // Clean up timer data from localStorage
+      localStorage.removeItem(`timer_${questionId}`);
+      
+      // Clear the timer interval
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+
+      // Redirect to classroom page
+      navigate(`/batch/${batchId}`);
+      
+    } catch (err) {
+      setError("Error submitting solution: " + err.message);
+      console.error("Final submission error:", err);
+      setSubmitting(false);
+    }
+  };
+
+  // Show confirmation dialog before final submission
+  const confirmFinalSubmit = () => {
+    if (window.confirm("Are you sure you want to submit your solution? This will end your test and calculate your final score.")) {
+      handleFinalSubmit();
+    }
+  };
+
   return (
     <div className="h-screen w-screen p-4 mt-24 flex flex-col lg:flex-row gap-4 ">
       {/* Question Panel */}
@@ -153,11 +318,25 @@ const CodingSpace = () => {
             <p>Loading question...</p>
           </div>
         ) : error ? (
-          <div className="p-4 text-red-500">
-            <p>{error}</p>
+          <div className="p-4 text-red-500 flex justify-center items-center h-full">
+            <div className="text-center">
+              <p className="text-xl mb-4">{error}</p>
+              {error.includes("already been attempted") && (
+                <p>Redirecting you back to the batch page...</p>
+              )}
+            </div>
           </div>
         ) : question ? (
           <div className="p-6">
+            {/* Timer Display */}
+            {timeRemaining !== null && (
+              <div className={`mb-4 text-center p-2 rounded-md font-mono text-xl ${
+                timeRemaining < 300 ? 'bg-red-900/30 text-red-400' : 'bg-zinc-800'
+              }`}>
+                Time Remaining: {formatTime(timeRemaining)}
+              </div>
+            )}
+
             <h1 className="text-2xl font-bold mb-4">{question.Title}</h1>
             <div className="prose prose-invert max-w-none">
               <p className="mb-6 whitespace-pre-wrap">{question.Description}</p>
@@ -337,17 +516,32 @@ const CodingSpace = () => {
               </select>
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting || !question}
-              className={`px-6 py-3 ${
-                submitting || !question
-                  ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
-                  : "bg-blue-500/10 text-blue-500 border border-blue-500/20 hover:bg-blue-500/20"
-              } rounded-full transition-colors shadow-lg`}
-            >
-              {submitting ? "Running..." : "Submit Solution"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={submitting || !question}
+                className={`px-6 py-3 ${
+                  submitting || !question
+                    ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
+                    : "bg-blue-500/10 text-blue-500 border border-blue-500/20 hover:bg-blue-500/20"
+                } rounded-full transition-colors shadow-lg`}
+              >
+                {submitting ? "Running..." : "Run Code"}
+              </button>
+              
+              <button
+                type="button"
+                onClick={confirmFinalSubmit}
+                disabled={submitting || !question}
+                className={`px-6 py-3 ${
+                  submitting || !question
+                    ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
+                    : "bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20"
+                } rounded-full transition-colors shadow-lg`}
+              >
+                Submit Solution
+              </button>
+            </div>
           </div>
           <div className="border border-zinc-700 rounded-md overflow-hidden flex-grow">
             <Editor

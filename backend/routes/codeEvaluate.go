@@ -7,9 +7,10 @@ import (
 
 // CodeSubmission represents the structure of a code submission request
 type CodeSubmission struct {
-	QuestionID int64  `json:"question_id"`
-	Code       string `json:"code"`
-	LanguageID int    `json:"language_id"`
+	QuestionID     int64  `json:"question_id"`
+	Code           string `json:"code"`
+	LanguageID     int    `json:"language_id"`
+	CalculateScore bool   `json:"calculate_score"` // Added flag for score calculation
 }
 
 // CodeEvaluateHandler handles the API endpoint for evaluating code submissions
@@ -44,8 +45,8 @@ func CodeEvaluateHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// Call the db function to evaluate the code
-	result, err := db.EvaluateCode(userID, submission.QuestionID, submission.Code, submission.LanguageID)
+	// Call the db function to evaluate the code, passing the calculateScore flag
+	result, err := db.EvaluateCode(userID, submission.QuestionID, submission.Code, submission.LanguageID, submission.CalculateScore)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to evaluate code: " + err.Error(),

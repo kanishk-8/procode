@@ -15,13 +15,13 @@ import (
 
 // Language IDs for Judge0 API
 // const (
-// 	PYTHON3    = 71
-// 	GO         = 60
-// 	JAVA       = 62
-// 	CPP        = 54
-// 	C          = 50
-// 	JAVASCRIPT = 63
-// 	// Add more languages as needed
+// 		PYTHON3    = 71
+// 		GO         = 60
+// 		JAVA       = 62
+// 		CPP        = 54
+// 		C          = 50
+// 		JAVASCRIPT = 63
+// 		// Add more languages as needed
 // )
 
 // TestResult represents the result of a single test case
@@ -62,7 +62,7 @@ type Judge0Response struct {
 }
 
 // EvaluateCode evaluates a code submission against test cases using Judge0 API
-func EvaluateCode(userID int64, questionID int64, code string, languageID int) (*EvaluationResult, error) {
+func EvaluateCode(userID int64, questionID int64, code string, languageID int, calculateScore bool) (*EvaluationResult, error) {
 	// 1. Validate if the user is a student
 	var studentID int64
 	err := Con.QueryRow("SELECT id FROM student WHERE user_id = ?", userID).Scan(&studentID)
@@ -73,9 +73,10 @@ func EvaluateCode(userID int64, questionID int64, code string, languageID int) (
 		return nil, fmt.Errorf("error finding student: %w", err)
 	}
 
-	// 2. Find the batch to which the question belongs
+	// 2. Find the batch to which the question belongs and get time limit
 	var batchID int64
-	err = Con.QueryRow("SELECT batch_id FROM question WHERE id = ?", questionID).Scan(&batchID)
+	var timeLimit int
+	err = Con.QueryRow("SELECT batch_id, time_limit FROM question WHERE id = ?", questionID).Scan(&batchID, &timeLimit)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("question not found")
@@ -96,7 +97,39 @@ func EvaluateCode(userID int64, questionID int64, code string, languageID int) (
 		return nil, errors.New("student is not enrolled in the batch containing this question")
 	}
 
-	// 4. Fetch all test cases for the question
+	// 4. Check if a final submission has already been made
+	var attemptID int64
+	var endTimeExists bool
+	var startTime time.Time
+	var alreadyAttempted bool
+
+	err = Con.QueryRow(`
+		SELECT id, start_time, (end_time IS NOT NULL) as has_end_time, attempted
+		FROM attempt 
+		WHERE student_id = ? AND question_id = ?
+		ORDER BY id DESC LIMIT 1`,
+		studentID, questionID).Scan(&attemptID, &startTime, &endTimeExists, &alreadyAttempted)
+
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("error checking for existing attempt: %w", err)
+	}
+
+	// If no attempt found, it's an error since an attempt should have been created when question was retrieved
+	if err == sql.ErrNoRows {
+		return nil, errors.New("no attempt record found, please access the question details first")
+	}
+
+	// If end_time exists, no more submissions allowed
+	if endTimeExists {
+		return nil, errors.New("final submission has already been made for this question")
+	}
+
+	// If this is a graded submission (calculateScore is true) and the attempt is already marked as attempted
+	if calculateScore && alreadyAttempted {
+		return nil, errors.New("this attempt has already been submitted for grading")
+	}
+
+	// 5. Fetch all test cases for the question
 	rows, err := Con.Query(`
 		SELECT input_text, expected_output, is_hidden
 		FROM test_case 
@@ -210,13 +243,37 @@ func EvaluateCode(userID int64, questionID int64, code string, languageID int) (
 	}
 	result.Status = status
 
-	// 9. Save the attempt in the database
+	// 9. Calculate score if flag is provided
+	score := 0
+	if calculateScore {
+		score = int((float64(result.PassedTests) / float64(result.TotalTests)) * 100)
+	}
+
+	// 10. Handle timing using the retrieved start_time
+	endTime := time.Now()
+	var timeTaken int = 0
+
+	// Calculate time taken in seconds using the start_time from the existing attempt
+	if !startTime.IsZero() {
+		timeTaken = int(endTime.Sub(startTime).Seconds())
+
+		// Validate if time is within limits (with 10s relaxation)
+		// Convert timeLimit from minutes to seconds and add relaxation
+		maxAllowedTimeSeconds := (timeLimit * 60) + 10
+		if timeTaken > maxAllowedTimeSeconds {
+			status = "timed_out"
+			result.Status = status
+		}
+	}
+
+	// 11. Update the attempt record instead of creating a new one
 	_, err = Con.Exec(`
-		INSERT INTO attempt (student_id, question_id, submitted_code, status)
-		VALUES (?, ?, ?, ?)`,
-		studentID, questionID, code, status)
+		UPDATE attempt 
+		SET submitted_code = ?, status = ?, score = ?, end_time = ?, time_taken_seconds = ?, attempted = ?
+		WHERE id = ?`,
+		code, status, score, endTime, timeTaken, calculateScore, attemptID)
 	if err != nil {
-		return nil, fmt.Errorf("error saving attempt: %w", err)
+		return nil, fmt.Errorf("error updating attempt: %w", err)
 	}
 
 	return &result, nil
