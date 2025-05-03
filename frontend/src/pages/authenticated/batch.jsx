@@ -98,7 +98,9 @@ function Batch() {
               );
               return (
                 <Link
-                  to={available ? `/codingSpace/${question.id}` : "#"}
+                  to={
+                    available ? `/codingSpace/${batchId}/${question.id}` : "#"
+                  }
                   key={question.id}
                   className={`block ${!available ? "cursor-not-allowed" : ""}`}
                   onClick={(e) => !available && e.preventDefault()}

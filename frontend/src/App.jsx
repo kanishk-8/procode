@@ -32,7 +32,7 @@ function App() {
           }
         />
         <Route
-          path="/codingSpace/:questionId"
+          path="/codingSpace/:batchId/:questionId"
           element={
             <ProtectedRoute>
               <CodingSpace />
