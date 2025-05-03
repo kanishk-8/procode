@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link, useParams, Outlet } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 
 function Batch() {
   const { batchId } = useParams();
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
+  const [batchName, setBatchName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
 
   useEffect(() => {
     // Fetch questions when component mounts
@@ -30,6 +34,7 @@ function Batch() {
 
       if (data.questions) {
         setQuestions(data.questions);
+        setBatchName(data.batchName || "");
       } else {
         setQuestions([]);
       }
@@ -101,11 +106,33 @@ function Batch() {
     }
   };
 
+  const handleStartQuestion = (question) => {
+    setSelectedQuestion(question);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmStart = () => {
+    if (selectedQuestion) {
+      navigate(`/codingSpace/${batchId}/${selectedQuestion.id}`);
+    }
+    setShowConfirmation(false);
+  };
+
+  const handleCancelStart = () => {
+    setShowConfirmation(false);
+    setSelectedQuestion(null);
+  };
+
   return (
     <div className="min-h-screen py-28 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold">Batch {batchId}</h1>
+        <div className="flex flex-col mb-8">
+          <h1 className="text-4xl font-bold">
+            {batchName ? batchName : `Batch ${batchId}`}
+          </h1>
+          {batchName && (
+            <p className="text-gray-400 mt-2">Batch ID: {batchId}</p>
+          )}
         </div>
 
         {loading ? (
@@ -123,74 +150,127 @@ function Batch() {
         ) : (
           <div className="grid gap-4">
             {questions.map((question) => {
-              const available = isQuestionAvailable(
-                question.startTime,
-                question.endTime
-              ) && !question.isAttempted;
+              const available =
+                isQuestionAvailable(question.startTime, question.endTime) &&
+                !question.isAttempted;
               return (
-                <Link
-                  to={
-                    available ? `/codingSpace/${batchId}/${question.id}` : "#"
-                  }
+                <div
                   key={question.id}
-                  className={`block ${!available ? "cursor-not-allowed" : ""}`}
-                  onClick={(e) => !available && e.preventDefault()}
+                  className={`p-5 border border-zinc-700 rounded-lg 
+                      ${available ? "" : "bg-zinc-800 opacity-70"} 
+                      transition-colors duration-200`}
                 >
-                  <div
-                    className={`p-5 border border-zinc-700 rounded-lg 
-                        ${
-                          available
-                            ? "hover:bg-zinc-700"
-                            : "bg-zinc-800 opacity-70"
-                        } 
-                        transition-colors duration-200`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium text-lg">{question.title}</h3>
-                      <div className="flex space-x-2">
-                        {question.isAttempted && (
-                          <span className={`${getStatusBadgeColor(question.status)} text-white px-2 py-1 rounded-md text-xs`}>
-                            {getStatusText(question.status)}
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium text-lg">{question.title}</h3>
+                    <div className="flex space-x-2">
+                      {question.isAttempted && (
+                        <span
+                          className={`${getStatusBadgeColor(
+                            question.status
+                          )} text-white px-2 py-1 rounded-md text-xs`}
+                        >
+                          {getStatusText(question.status)}
+                          {question.score !== null && ` - ${question.score}%`}
+                        </span>
+                      )}
+                      {!available &&
+                        !question.isAttempted &&
+                        question.startTime &&
+                        new Date(question.startTime) > new Date() && (
+                          <span className="bg-yellow-600 text-white px-2 py-1 rounded-md text-xs">
+                            Starts at {formatDateTime(question.startTime)}
                           </span>
                         )}
-                        {!available &&
-                          !question.isAttempted &&
-                          question.startTime &&
-                          new Date(question.startTime) > new Date() && (
-                            <span className="bg-yellow-600 text-white px-2 py-1 rounded-md text-xs">
-                              Starts at {formatDateTime(question.startTime)}
-                            </span>
-                          )}
-                        {!available &&
-                          !question.isAttempted &&
-                          question.endTime &&
-                          new Date(question.endTime) < new Date() && (
-                            <span className="bg-red-600 text-white px-2 py-1 rounded-md text-xs">
-                              Ended
-                            </span>
-                          )}
-                      </div>
-                    </div>
-                    <div className="mt-2 text-sm text-gray-300">
-                      {question.timeLimit ? (
-                        <p>Time Limit: {question.timeLimit} minutes</p>
-                      ) : (
-                        <p>No time limit</p>
-                      )}
-                      {question.startTime && (
-                        <p>Start: {formatDateTime(question.startTime)}</p>
-                      )}
-                      {question.endTime && (
-                        <p>End: {formatDateTime(question.endTime)}</p>
-                      )}
-                      {question.isAttempted && (
-                        <p className="mt-1 text-gray-400">You've already attempted this question</p>
-                      )}
+                      {!available &&
+                        !question.isAttempted &&
+                        question.endTime &&
+                        new Date(question.endTime) < new Date() && (
+                          <span className="bg-red-600 text-white px-2 py-1 rounded-md text-xs">
+                            Ended
+                          </span>
+                        )}
                     </div>
                   </div>
-                </Link>
+                  <div className="mt-2 text-sm text-gray-300">
+                    {question.timeLimit ? (
+                      <p>Time Limit: {question.timeLimit} minutes</p>
+                    ) : (
+                      <p>No time limit</p>
+                    )}
+                    {question.startTime && (
+                      <p>Start: {formatDateTime(question.startTime)}</p>
+                    )}
+                    {question.endTime && (
+                      <p>End: {formatDateTime(question.endTime)}</p>
+                    )}
+                    {question.isAttempted && (
+                      <p className="mt-1 text-gray-400">
+                        You've already attempted this question
+                        {question.score !== null &&
+                          ` - Score: ${question.score}%`}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    {available ? (
+                      <button
+                        onClick={() => handleStartQuestion(question)}
+                        className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                      >
+                        Start Question
+                      </button>
+                    ) : question.isAttempted ? (
+                      <button
+                        className="px-4 py-2 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full cursor-not-allowed"
+                        disabled
+                      >
+                        Already Attempted
+                      </button>
+                    ) : (
+                      <button
+                        className="px-4 py-2 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full cursor-not-allowed"
+                        disabled
+                      >
+                        Not Available
+                      </button>
+                    )}
+                  </div>
+                </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Confirmation Dialog */}
+        {showConfirmation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-xl font-semibold mb-4">Start Question</h3>
+              <p className="mb-6 text-gray-300">
+                Warning: Once you start this question, you cannot reattempt it.
+                Make sure you're ready to begin!
+                {selectedQuestion && selectedQuestion.timeLimit > 0 && (
+                  <span className="block mt-2 font-medium">
+                    This question has a time limit of{" "}
+                    {selectedQuestion.timeLimit} minutes.
+                  </span>
+                )}
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={handleCancelStart}
+                  className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmStart}
+                  className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                >
+                  Start
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

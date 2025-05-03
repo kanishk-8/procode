@@ -4,6 +4,7 @@ import { useParams, Outlet, Link } from "react-router-dom";
 function BatchTeacher() {
   const { batchId } = useParams();
   const [questions, setQuestions] = useState([]);
+  const [batchName, setBatchName] = useState("");
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
   const [newQuestion, setNewQuestion] = useState({
     title: "",
@@ -11,7 +12,7 @@ function BatchTeacher() {
     test_cases: [{ input_text: "", expected_output: "", is_hidden: false }],
     time_limit: 30, // Default time limit of 30 minutes
     start_time: "", // Add start_time field
-    end_time: "",   // Add end_time field
+    end_time: "", // Add end_time field
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,6 +39,7 @@ function BatchTeacher() {
 
       if (data.questions) {
         setQuestions(data.questions);
+        setBatchName(data.batchName || "");
       } else {
         setQuestions([]);
       }
@@ -56,16 +58,20 @@ function BatchTeacher() {
       if (newQuestion.start_time && newQuestion.end_time) {
         const startDate = new Date(newQuestion.start_time);
         const endDate = new Date(newQuestion.end_time);
-        
+
         if (endDate <= startDate) {
           setError("End time must be after the start time");
           return;
         }
       }
-      
+
       // Format dates in ISO format if they exist
-      const formattedStartTime = newQuestion.start_time ? new Date(newQuestion.start_time).toISOString() : null;
-      const formattedEndTime = newQuestion.end_time ? new Date(newQuestion.end_time).toISOString() : null;
+      const formattedStartTime = newQuestion.start_time
+        ? new Date(newQuestion.start_time).toISOString()
+        : null;
+      const formattedEndTime = newQuestion.end_time
+        ? new Date(newQuestion.end_time).toISOString()
+        : null;
 
       const response = await fetch("http://localhost:8080/addquestion", {
         method: "POST",
@@ -95,7 +101,7 @@ function BatchTeacher() {
         test_cases: [{ input_text: "", expected_output: "", is_hidden: false }],
         time_limit: 30, // Reset to default
         start_time: "", // Reset start_time
-        end_time: "",   // Reset end_time
+        end_time: "", // Reset end_time
       });
 
       fetchQuestions();
@@ -149,14 +155,21 @@ function BatchTeacher() {
   return (
     <div className="min-h-screen py-28 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold">Manage Batch {batchId}</h1>
-          <button
-            onClick={() => setShowAddQuestionModal(true)}
-            className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
-          >
-            Add Question
-          </button>
+        <div className="flex flex-col mb-8">
+          <h1 className="text-4xl font-bold">
+            {batchName ? batchName : `Batch ${batchId}`}
+          </h1>
+          {batchName && (
+            <p className="text-gray-400 mt-2">Batch ID: {batchId}</p>
+          )}
+          <div className="mt-4">
+            <button
+              onClick={() => setShowAddQuestionModal(true)}
+              className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+            >
+              Add Question
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -175,8 +188,25 @@ function BatchTeacher() {
                 key={question.id}
                 className="block"
               >
-                <div className="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-all">
-                  <h3 className="text-xl font-medium">{question.title}</h3>
+                <div className="p-5 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors duration-200">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium text-lg">{question.title}</h3>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-300">
+                    {question.timeLimit ? (
+                      <p>Time Limit: {question.timeLimit} minutes</p>
+                    ) : (
+                      <p>No time limit</p>
+                    )}
+                    {question.startTime && (
+                      <p>
+                        Start: {new Date(question.startTime).toLocaleString()}
+                      </p>
+                    )}
+                    {question.endTime && (
+                      <p>End: {new Date(question.endTime).toLocaleString()}</p>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -248,7 +278,7 @@ function BatchTeacher() {
                       required
                     />
                   </div>
-                  
+
                   {/* Add Schedule Fields */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -270,7 +300,7 @@ function BatchTeacher() {
                         When students can start solving this question
                       </p>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         End Time (optional)
@@ -284,7 +314,10 @@ function BatchTeacher() {
                             end_time: e.target.value,
                           });
                           // Clear error when user changes the end time
-                          if (error && error.includes("End time must be after")) {
+                          if (
+                            error &&
+                            error.includes("End time must be after")
+                          ) {
                             setError(null);
                           }
                         }}
@@ -408,7 +441,7 @@ function BatchTeacher() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
                     disabled={!validateDateRange()}
                   >
                     Add Question

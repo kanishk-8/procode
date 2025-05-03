@@ -1,10 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useParams, Outlet, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import {
+  useParams,
+  useNavigate,
+  UNSAFE_NavigationContext,
+} from "react-router-dom";
 import Editor from "@monaco-editor/react";
 
 const CodingSpace = () => {
   const { questionId } = useParams();
   const { batchId } = useParams();
+  const navigate = useNavigate();
+  const { navigator } = useContext(UNSAFE_NavigationContext);
+
   const [question, setQuestion] = useState(null);
   const [testCases, setTestCases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,12 +21,19 @@ const CodingSpace = () => {
   const [languageId, setLanguageId] = useState(71); // Default: Python (as number)
   const editorRef = useRef(null);
   const [outputMessage, setOutputMessage] = useState("");
-  const navigate = useNavigate();
-  
+
   // Timer states
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [timerActive, setTimerActive] = useState(false);
   const timerIntervalRef = useRef(null);
+
+  // Navigation warning states
+  const [showNavigationWarning, setShowNavigationWarning] = useState(false);
+  const [navigationDestination, setNavigationDestination] = useState(null);
+  const [testInProgress, setTestInProgress] = useState(false);
+
+  // Submission confirmation modal state
+  const [showSubmitConfirmation, setShowSubmitConfirmation] = useState(false);
 
   // Language mapping for Monaco Editor
   const languageMap = {
@@ -39,14 +53,73 @@ const CodingSpace = () => {
     63: "// Write your JavaScript code here\n\n",
   };
 
+  // Set up navigation blocker
+  useEffect(() => {
+    // Only add the listener if a test is in progress
+    if (!testInProgress || submitting || error) return;
+
+    // Store original push method to restore later
+    const originalPush = navigator.push;
+
+    // Override push method to intercept navigation attempts
+    navigator.push = (to, state) => {
+      // Show warning modal and store destination
+      setNavigationDestination(to);
+      setShowNavigationWarning(true);
+
+      // Return false to block navigation
+      return false;
+    };
+
+    // Add a listener for popstate events (browser back/forward buttons)
+    const handlePopState = (event) => {
+      // Prevent the default navigation
+      event.preventDefault();
+
+      // Show warning modal with the batch page as destination
+      setNavigationDestination(`/batch/${batchId}`);
+      setShowNavigationWarning(true);
+
+      // Push the current URL back to the history stack to prevent navigation
+      window.history.pushState(null, "", window.location.pathname);
+    };
+
+    // Push an entry to the history stack to create a point to return to
+    window.history.pushState(null, "", window.location.pathname);
+
+    // Add listener for the back button
+    window.addEventListener("popstate", handlePopState);
+
+    // Handle browser close/refresh events
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      const message =
+        "You have an ongoing test. Your progress will be submitted if you leave.";
+      e.returnValue = message;
+      return message;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Clean up function
+    return () => {
+      // Restore original navigation behavior
+      navigator.push = originalPush;
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [testInProgress, submitting, error, navigator, batchId]);
+
   // Fetch question details when component mounts
   useEffect(() => {
     fetchQuestionDetails();
+    setTestInProgress(true);
     return () => {
       // Clear timer interval on unmount
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
       }
+      setTestInProgress(false);
     };
   }, [questionId]);
 
@@ -63,15 +136,22 @@ const CodingSpace = () => {
       if (!response.ok) {
         const errorData = await response.json();
         // Check if this is due to the question being already attempted
-        if (errorData.message && errorData.message.includes("already been attempted")) {
-          setError("This question has already been attempted and cannot be accessed again.");
+        if (
+          errorData.message &&
+          errorData.message.includes("already been attempted")
+        ) {
+          setError(
+            "This question has already been attempted and cannot be accessed again."
+          );
           // Navigate back to batch page after 3 seconds
           setTimeout(() => {
             navigate(`/batch/${batchId}`);
           }, 3000);
           return;
         }
-        throw new Error(errorData.message || "Failed to fetch question details");
+        throw new Error(
+          errorData.message || "Failed to fetch question details"
+        );
       }
 
       const data = await response.json();
@@ -79,7 +159,7 @@ const CodingSpace = () => {
       if (data.data) {
         setQuestion(data.data.Question);
         setTestCases(data.data.TestCases);
-        
+
         // Initialize timer based on API response
         if (data.data.Question.TimeLimit && data.data.Attempt) {
           initializeTimer(data.data.Question.TimeLimit, data.data.Attempt);
@@ -101,7 +181,7 @@ const CodingSpace = () => {
     const storedData = localStorage.getItem(`timer_${questionId}`);
     let startTime;
     let elapsedSeconds = 0;
-    
+
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       startTime = new Date(parsedData.startTime);
@@ -110,25 +190,31 @@ const CodingSpace = () => {
       // If no stored data, use the attempt start time from the API
       startTime = new Date(attempt.StartTime);
       elapsedSeconds = attempt.TimeTakenSecs || 0;
-      
+
       // Store the timer data in localStorage
-      localStorage.setItem(`timer_${questionId}`, JSON.stringify({
-        startTime: startTime,
-        timeLimit: timeLimit * 60 // Convert minutes to seconds
-      }));
+      localStorage.setItem(
+        `timer_${questionId}`,
+        JSON.stringify({
+          startTime: startTime,
+          timeLimit: timeLimit * 60, // Convert minutes to seconds
+        })
+      );
     } else {
       // If no attempt data, use current time
       startTime = new Date();
-      localStorage.setItem(`timer_${questionId}`, JSON.stringify({
-        startTime: startTime,
-        timeLimit: timeLimit * 60 // Convert minutes to seconds
-      }));
+      localStorage.setItem(
+        `timer_${questionId}`,
+        JSON.stringify({
+          startTime: startTime,
+          timeLimit: timeLimit * 60, // Convert minutes to seconds
+        })
+      );
     }
-    
+
     // Calculate remaining time in seconds
     const totalSeconds = timeLimit * 60; // Convert minutes to seconds
     const remainingSeconds = totalSeconds - elapsedSeconds;
-    
+
     if (remainingSeconds <= 0) {
       // Time already expired, auto-submit
       setTimeRemaining(0);
@@ -146,11 +232,11 @@ const CodingSpace = () => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
     }
-    
+
     setTimeRemaining(initialSeconds);
-    
+
     timerIntervalRef.current = setInterval(() => {
-      setTimeRemaining(prevTime => {
+      setTimeRemaining((prevTime) => {
         if (prevTime <= 1) {
           // Time's up
           clearInterval(timerIntervalRef.current);
@@ -167,7 +253,9 @@ const CodingSpace = () => {
     if (seconds === null) return "--:--";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const handleEditorDidMount = (editor) => {
@@ -180,7 +268,7 @@ const CodingSpace = () => {
   };
 
   // Handle code execution without score calculation (Run Code button)
-  const handleSubmit = async (e) => {
+  const handleRunCode = async (e) => {
     e.preventDefault();
     if (!editorRef.current) return;
 
@@ -209,7 +297,7 @@ const CodingSpace = () => {
           question_id: parseInt(questionId),
           code: code,
           language_id: languageId,
-          calculate_score: false
+          calculate_score: false,
         }),
       });
 
@@ -266,13 +354,13 @@ const CodingSpace = () => {
           question_id: parseInt(questionId),
           code: code,
           language_id: languageId,
-          calculate_score: true
+          calculate_score: true,
         }),
       });
 
       const responseText = await response.text();
       let data;
-      
+
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
@@ -285,7 +373,7 @@ const CodingSpace = () => {
 
       // Clean up timer data from localStorage
       localStorage.removeItem(`timer_${questionId}`);
-      
+
       // Clear the timer interval
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
@@ -294,7 +382,6 @@ const CodingSpace = () => {
 
       // Redirect to classroom page
       navigate(`/batch/${batchId}`);
-      
     } catch (err) {
       setError("Error submitting solution: " + err.message);
       console.error("Final submission error:", err);
@@ -303,14 +390,41 @@ const CodingSpace = () => {
   };
 
   // Show confirmation dialog before final submission
-  const confirmFinalSubmit = () => {
-    if (window.confirm("Are you sure you want to submit your solution? This will end your test and calculate your final score.")) {
-      handleFinalSubmit();
+  const handleManualSubmit = () => {
+    setShowSubmitConfirmation(true);
+  };
+
+  const handleConfirmSubmit = () => {
+    setShowSubmitConfirmation(false);
+    handleFinalSubmit();
+  };
+
+  // Function to confirm navigation and submit test
+  const confirmNavigation = () => {
+    setShowNavigationWarning(false);
+    // Save the destination before starting the submission process
+    const destination = navigationDestination;
+
+    // Submit the test
+    handleFinalSubmit();
+
+    // Navigate to the destination (this works because the handleFinalSubmit already
+    // has a navigate call, but we're making it more explicit)
+    if (destination) {
+      setTimeout(() => {
+        navigate(destination);
+      }, 100);
     }
   };
 
+  // Function to cancel navigation
+  const cancelNavigation = () => {
+    setShowNavigationWarning(false);
+    setNavigationDestination(null);
+  };
+
   return (
-    <div className="h-screen w-screen p-4 mt-24 flex flex-col lg:flex-row gap-4 ">
+    <div className="h-screen w-screen p-4 mt-24 flex flex-col lg:flex-row gap-4">
       {/* Question Panel */}
       <div className="lg:w-[40%] h-[50vh] lg:h-[80vh] border border-zinc-700 rounded-lg overflow-auto">
         {loading ? (
@@ -330,9 +444,13 @@ const CodingSpace = () => {
           <div className="p-6">
             {/* Timer Display */}
             {timeRemaining !== null && (
-              <div className={`mb-4 text-center p-2 rounded-md font-mono text-xl ${
-                timeRemaining < 300 ? 'bg-red-900/30 text-red-400' : 'bg-zinc-800'
-              }`}>
+              <div
+                className={`mb-4 text-center p-2 rounded-md font-mono text-xl ${
+                  timeRemaining < 300
+                    ? "bg-red-900/30 text-red-400"
+                    : "bg-zinc-800"
+                }`}
+              >
                 Time Remaining: {formatTime(timeRemaining)}
               </div>
             )}
@@ -499,70 +617,130 @@ const CodingSpace = () => {
 
       {/* Code Editor Panel */}
       <div className="lg:w-[60%] h-[50vh] lg:h-[80vh] flex flex-col">
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <select
-                id="language"
-                className="p-2 bg-zinc-800 border border-zinc-700 rounded-md text-white"
-                value={languageId}
-                onChange={handleLanguageChange}
-              >
-                <option value={71}>Python 3</option>
-                <option value={54}>C++ (GCC 9.2.0)</option>
-                <option value={62}>Java</option>
-                <option value={50}>C</option>
-                <option value={63}>JavaScript</option>
-              </select>
-            </div>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <select
+              id="language"
+              className="p-2 bg-zinc-800 border border-zinc-700 rounded-md text-white"
+              value={languageId}
+              onChange={handleLanguageChange}
+            >
+              <option value={71}>Python 3</option>
+              <option value={54}>C++ (GCC 9.2.0)</option>
+              <option value={62}>Java</option>
+              <option value={50}>C</option>
+              <option value={63}>JavaScript</option>
+            </select>
+          </div>
 
-            <div className="flex gap-3">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleRunCode}
+              disabled={submitting || !question}
+              className={`px-6 py-3 ${
+                submitting || !question
+                  ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
+                  : "bg-blue-500/10 text-blue-500 border border-blue-500/20 hover:bg-blue-500/20"
+              } rounded-full transition-colors shadow-lg`}
+            >
+              {submitting ? "Running..." : "Run Code"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleManualSubmit}
+              disabled={submitting || !question}
+              className={`px-6 py-3 ${
+                submitting || !question
+                  ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
+                  : "bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20"
+              } rounded-full transition-colors shadow-lg`}
+            >
+              Submit Solution
+            </button>
+          </div>
+        </div>
+        <div className="border border-zinc-700 rounded-md overflow-hidden flex-grow">
+          <Editor
+            height="100%"
+            width="100%"
+            language={languageMap[languageId]}
+            defaultValue={defaultCodes[languageId]}
+            theme="vs-dark"
+            options={{
+              fontSize: 16,
+              minimap: { enabled: false },
+              automaticLayout: true,
+              wordWrap: "on",
+            }}
+            onMount={handleEditorDidMount}
+            key={languageId} // Re-render editor when language changes
+          />
+        </div>
+      </div>
+
+      {/* Navigation Warning Modal */}
+      {showNavigationWarning && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4">Submit Test?</h3>
+            <p className="mb-6 text-gray-300">
+              You are about to leave this page. Your test will be automatically
+              submitted with your current answers.
+              <span className="block mt-2">
+                Are you sure you want to proceed?
+              </span>
+            </p>
+            <div className="flex justify-end space-x-4">
               <button
-                type="submit"
-                disabled={submitting || !question}
-                className={`px-6 py-3 ${
-                  submitting || !question
-                    ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
-                    : "bg-blue-500/10 text-blue-500 border border-blue-500/20 hover:bg-blue-500/20"
-                } rounded-full transition-colors shadow-lg`}
+                onClick={cancelNavigation}
+                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
               >
-                {submitting ? "Running..." : "Run Code"}
+                Continue Test
               </button>
-              
               <button
-                type="button"
-                onClick={confirmFinalSubmit}
-                disabled={submitting || !question}
-                className={`px-6 py-3 ${
-                  submitting || !question
-                    ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
-                    : "bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20"
-                } rounded-full transition-colors shadow-lg`}
+                onClick={confirmNavigation}
+                className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
               >
-                Submit Solution
+                Submit & Leave
               </button>
             </div>
           </div>
-          <div className="border border-zinc-700 rounded-md overflow-hidden flex-grow">
-            <Editor
-              height="100%"
-              width="100%"
-              language={languageMap[languageId]}
-              defaultValue={defaultCodes[languageId]}
-              theme="vs-dark"
-              options={{
-                fontSize: 16,
-                minimap: { enabled: false },
-                automaticLayout: true,
-                wordWrap: "on",
-              }}
-              onMount={handleEditorDidMount}
-              key={languageId} // Re-render editor when language changes
-            />
+        </div>
+      )}
+
+      {/* Submission Confirmation Modal */}
+      {showSubmitConfirmation && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4">Submit Solution</h3>
+            <p className="mb-6 text-gray-300">
+              Are you sure you want to submit your solution? Once submitted, you
+              cannot make any more changes or reattempt this question.
+              {timeRemaining !== null && (
+                <span className="block mt-2 font-medium">
+                  You still have {formatTime(timeRemaining)} remaining.
+                </span>
+              )}
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowSubmitConfirmation(false)}
+                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSubmit}
+                className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+              >
+                Submit
+              </button>
+            </div>
           </div>
-        </form>
-      </div>
-      <Outlet />
+        </div>
+      )}
     </div>
   );
 };

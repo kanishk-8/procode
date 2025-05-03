@@ -31,7 +31,7 @@ func GetQuestionsByBatchHandler(c *fiber.Ctx) error {
 	}
 	userID := int64(userIDFloat)
 
-	questions, err := db.GetQuestionsByBatch(userID, batchID)
+	batchWithQuestions, err := db.GetQuestionsByBatch(userID, batchID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to get questions: " + err.Error(),
@@ -40,6 +40,7 @@ func GetQuestionsByBatchHandler(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":   "Questions retrieved successfully",
-		"questions": questions,
+		"batchName": batchWithQuestions.BatchName,
+		"questions": batchWithQuestions.Questions,
 	})
 }

@@ -65,6 +65,13 @@ type QuestionWithTestCasesAndAttempt struct {
 	Attempt   *AttemptInfo
 }
 
+// Add a field for batch name in the response
+type BatchWithQuestions struct {
+	BatchID    int64              `json:"batchId"`
+	BatchName  string             `json:"batchName"`
+	Questions  []QuestionBasicInfo `json:"questions"`
+}
+
 func CreateQuestion(userID int64, batchID int64, title, description string, testCases []TestCase, timeLimit int, startTime, endTime *time.Time) (int64, error) {
 	var teacherID int64
 	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
@@ -135,7 +142,7 @@ func CreateQuestion(userID int64, batchID int64, title, description string, test
 	return questionID, nil
 }
 
-func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, error) {
+func GetQuestionsByBatch(userID int64, batchID int64) (*BatchWithQuestions, error) {
 	// Check if the user is a teacher
 	var teacherID int64
 	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
@@ -175,6 +182,13 @@ func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, erro
 		if !exists {
 			return nil, errors.New("you are not enrolled in this batch")
 		}
+	}
+
+	// Get batch name
+	var batchName string
+	err = Con.QueryRow("SELECT name FROM batch WHERE id = ?", batchID).Scan(&batchName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving batch name: %w", err)
 	}
 
 	var studentID int64
@@ -233,7 +247,11 @@ func GetQuestionsByBatch(userID int64, batchID int64) ([]QuestionBasicInfo, erro
 		return nil, fmt.Errorf("error iterating question rows: %w", err)
 	}
 
-	return questions, nil
+	return &BatchWithQuestions{
+		BatchID:   batchID,
+		BatchName: batchName,
+		Questions: questions,
+	}, nil
 }
 
 func GetQuestionByID(userID int64, batchID int64, questionID int64) (*QuestionWithTestCasesAndAttempt, error) {
