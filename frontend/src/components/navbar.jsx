@@ -17,7 +17,7 @@ const Navbar = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 p-3">
-      <div className="flex justify-between w-[85%] md:w-[90%] rounded-4xl h-14 items-center bg-white/10 backdrop-blur-lg text-white px-4 md:px-8">
+      <div className="flex justify-between w-[85%] md:w-[90%] rounded-4xl h-14 items-center bg-white/5 border border-white/10 backdrop-blur-xl text-white px-4 md:px-8">
         <Link to="/" className="flex items-center text-2xl font-bold">
           <img
             src="/logo.png"
@@ -100,91 +100,93 @@ const Navbar = () => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[80px] bg-black/95 backdrop-blur-lg z-40">
-          <div className="flex flex-col items-center pt-8 space-y-6">
-            {!isLoggedIn ? (
-              isHomePage ? (
-                <>
-                  <ScrollLink
-                    to="features"
-                    spy={true}
-                    smooth={true}
-                    duration={500}
-                    className="text-white text-lg font-bold"
+        <div className="md:hidden fixed top-20 left-1/2 -translate-x-1/2 w-[93%]  z-40">
+          <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden">
+            <div className="flex flex-col py-2">
+              {!isLoggedIn ? (
+                isHomePage ? (
+                  <>
+                    <ScrollLink
+                      to="features"
+                      spy={true}
+                      smooth={true}
+                      duration={500}
+                      className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Home
+                    </ScrollLink>
+                    <ScrollLink
+                      to="pricing"
+                      spy={true}
+                      smooth={true}
+                      duration={500}
+                      className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Pricing
+                    </ScrollLink>
+                    <ScrollLink
+                      to="why-choose-us"
+                      spy={true}
+                      smooth={true}
+                      duration={500}
+                      className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Why Us
+                    </ScrollLink>
+                    <ScrollLink
+                      to="contact"
+                      spy={true}
+                      smooth={true}
+                      duration={500}
+                      className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Contact Us
+                    </ScrollLink>
+                  </>
+                ) : (
+                  <Link
+                    to="/"
+                    className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold flex items-center"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Home
-                  </ScrollLink>
-                  <ScrollLink
-                    to="pricing"
-                    spy={true}
-                    smooth={true}
-                    duration={500}
-                    className="text-white text-lg font-bold"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Pricing
-                  </ScrollLink>
-                  <ScrollLink
-                    to="why-choose-us"
-                    spy={true}
-                    smooth={true}
-                    duration={500}
-                    className="text-white text-lg font-bold"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Why Us
-                  </ScrollLink>
-                  <ScrollLink
-                    to="contact"
-                    spy={true}
-                    smooth={true}
-                    duration={500}
-                    className="text-white text-lg font-bold"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Contact Us
-                  </ScrollLink>
-                </>
+                    <img
+                      src="/backButton.svg"
+                      alt="Logo"
+                      className="h-6 w-6 mr-2"
+                    />
+                    Back to Home
+                  </Link>
+                )
               ) : (
-                <Link
-                  to="/"
-                  className="text-white text-lg font-bold flex items-center"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <img
-                    src="/backButton.svg"
-                    alt="Logo"
-                    className="h-6 w-6 mr-2"
-                  />
-                  Back to Home
-                </Link>
-              )
-            ) : (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="text-white text-lg font-bold"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/classroom"
-                  className="text-white text-lg font-bold"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Classroom
-                </Link>
-                <Link
-                  to="/blogs"
-                  className="text-white text-lg font-bold"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Blogs
-                </Link>
-              </>
-            )}
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/classroom"
+                    className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Classroom
+                  </Link>
+                  <Link
+                    to="/blogs"
+                    className="px-8 py-5 hover:bg-white/5 transition-colors text-white text-lg font-bold"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Blogs
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -192,7 +194,7 @@ const Navbar = () => {
       {/* Mobile Menu Toggle */}
       <button
         onClick={toggleMobileMenu}
-        className="md:hidden h-14 w-14 flex items-center justify-center bg-white/10 backdrop-blur-lg text-white rounded-full"
+        className="md:hidden h-14 w-14 flex items-center justify-center bg-white/5 border border-white/10 backdrop-blur-xl text-white rounded-full"
       >
         <span className="text-base font-bold text-zinc-200">
           {isLoggedIn ? (
@@ -206,7 +208,7 @@ const Navbar = () => {
       {/* Desktop Navigation Link */}
       <Link
         to={isLoggedIn ? "/dashboard" : "/login"}
-        className="hidden md:flex h-16 w-16 items-center justify-center bg-white/10 backdrop-blur-lg text-white rounded-full"
+        className="hidden md:flex h-16 w-16 items-center justify-center bg-white/5 border border-white/10 backdrop-blur-xl text-white rounded-full"
       >
         <span className="text-lg font-bold text-zinc-200">
           {isLoggedIn ? (

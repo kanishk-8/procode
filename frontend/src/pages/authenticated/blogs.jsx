@@ -513,7 +513,7 @@ const Blogs = () => {
                   onChange={(e) =>
                     setNewBlog({ ...newBlog, title: e.target.value })
                   }
-                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg"
+                  className="w-full p-3 bg-white/5 border border-white/10 rounded-lg"
                   required
                 />
               </div>
@@ -525,7 +525,7 @@ const Blogs = () => {
                   onChange={(e) =>
                     setNewBlog({ ...newBlog, content: e.target.value })
                   }
-                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg h-64"
+                  className="w-full p-3 bg-white/5 border border-white/10 rounded-lg h-64"
                   required
                 />
               </div>
@@ -539,7 +539,7 @@ const Blogs = () => {
                   onChange={(e) =>
                     setNewBlog({ ...newBlog, excerpt: e.target.value })
                   }
-                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg h-24"
+                  className="w-full p-3 bg-white/5 border border-white/10 rounded-lg h-24"
                 />
               </div>
 
@@ -553,7 +553,7 @@ const Blogs = () => {
                   onChange={(e) =>
                     setNewBlog({ ...newBlog, imageUrl: e.target.value })
                   }
-                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg"
+                  className="w-full p-3 bg-white/5 border border-white/10 rounded-lg"
                 />
               </div>
 
@@ -567,7 +567,7 @@ const Blogs = () => {
                   onChange={(e) =>
                     setNewBlog({ ...newBlog, tags: e.target.value })
                   }
-                  className="w-full p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg"
+                  className="w-full p-3 bg-white/5 border border-white/10 rounded-lg"
                   placeholder="e.g. JavaScript, React, Programming"
                   required
                 />

@@ -105,7 +105,7 @@ const SignUp = () => {
                 id="username"
                 type="text"
                 placeholder="Choose a username"
-                className="w-full p-2 bg-white/5 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full p-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={loading}
@@ -123,7 +123,7 @@ const SignUp = () => {
                 id="email"
                 type="email"
                 placeholder="Enter your email"
-                className="w-full p-2 bg-white/5 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full p-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
@@ -140,7 +140,7 @@ const SignUp = () => {
                 </label>
                 <select
                   id="role"
-                  className="w-full p-2 bg-white/5 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  className="w-full p-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white appearance-none"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   disabled={loading}
@@ -161,7 +161,7 @@ const SignUp = () => {
                   id="userId"
                   type="text"
                   placeholder={`Enter ID`}
-                  className="w-full p-2 bg-white/5 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                  className="w-full p-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   disabled={loading}
@@ -180,7 +180,7 @@ const SignUp = () => {
                 id="password"
                 type="password"
                 placeholder="Create a password"
-                className="w-full p-2 bg-white/5 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full p-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
