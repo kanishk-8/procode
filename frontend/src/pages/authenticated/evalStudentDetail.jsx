@@ -1,6 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Bar, Pie, Line } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const EvalStudentDetail = () => {
   const { batchId, questionId } = useParams();
@@ -73,6 +98,72 @@ const EvalStudentDetail = () => {
       default:
         return data.students;
     }
+  };
+
+  const getChartData = () => {
+    if (!data?.students) return null;
+
+    const completed = data.students.filter(
+      (s) => s.attempt?.isAttempted
+    ).length;
+    const inProgress = data.students.filter(
+      (s) => s.attempt?.status === "in_progress"
+    ).length;
+    const notStarted = data.students.filter((s) => !s.attempt).length;
+
+    const scores = data.students
+      .filter((s) => s.attempt?.score !== undefined)
+      .map((s) => s.attempt.score);
+
+    const scoreRanges = {
+      "0-20": 0,
+      "21-40": 0,
+      "41-60": 0,
+      "61-80": 0,
+      "81-100": 0,
+    };
+
+    scores.forEach((score) => {
+      if (score <= 20) scoreRanges["0-20"]++;
+      else if (score <= 40) scoreRanges["21-40"]++;
+      else if (score <= 60) scoreRanges["41-60"]++;
+      else if (score <= 80) scoreRanges["61-80"]++;
+      else scoreRanges["81-100"]++;
+    });
+
+    return {
+      completion: {
+        labels: ["Completed", "In Progress", "Not Started"],
+        datasets: [
+          {
+            data: [completed, inProgress, notStarted],
+            backgroundColor: [
+              "rgba(34, 197, 94, 0.2)",
+              "rgba(59, 130, 246, 0.2)",
+              "rgba(161, 161, 170, 0.2)",
+            ],
+            borderColor: [
+              "rgb(34, 197, 94)",
+              "rgb(59, 130, 246)",
+              "rgb(161, 161, 170)",
+            ],
+            borderWidth: 1,
+          },
+        ],
+      },
+      scoreDistribution: {
+        labels: Object.keys(scoreRanges),
+        datasets: [
+          {
+            label: "Number of Students",
+            data: Object.values(scoreRanges),
+            backgroundColor: "rgba(59, 130, 246, 0.2)",
+            borderColor: "rgb(59, 130, 246)",
+            borderWidth: 1,
+          },
+        ],
+      },
+    };
   };
 
   if (loading) {
@@ -174,6 +265,62 @@ const EvalStudentDetail = () => {
               ).toFixed(2)}
               %
             </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-6">
+            <h3 className="text-xl font-bold mb-4">Completion Status</h3>
+            <div className="h-[300px] flex items-center justify-center">
+              {data && (
+                <Pie
+                  data={getChartData()?.completion}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: "bottom",
+                        labels: {
+                          color: "rgb(161, 161, 170)",
+                        },
+                      },
+                    },
+                  }}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-6">
+            <h3 className="text-xl font-bold mb-4">Score Distribution</h3>
+            <div className="h-[300px] flex items-center justify-center">
+              {data && (
+                <Bar
+                  data={getChartData()?.scoreDistribution}
+                  options={{
+                    responsive: true,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: { color: "rgb(161, 161, 170)" },
+                        grid: { color: "rgba(161, 161, 170, 0.1)" },
+                      },
+                      x: {
+                        ticks: { color: "rgb(161, 161, 170)" },
+                        grid: { display: false },
+                      },
+                    },
+                    plugins: {
+                      legend: {
+                        labels: {
+                          color: "rgb(161, 161, 170)",
+                        },
+                      },
+                    },
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
 

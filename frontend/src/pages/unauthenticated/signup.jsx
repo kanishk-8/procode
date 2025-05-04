@@ -69,7 +69,7 @@ const SignUp = () => {
   return (
     <div className="min-h-screen pt-20 flex flex-col md:flex-row">
       {/* Left side with welcome text */}
-      <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden ml-10">
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/60 flex flex-col justify-center px-12">
           <h2 className="text-7xl font-bold text-white mb-4">Join ProCode</h2>
           <p className="text-2xl text-white/90 max-w-md">
