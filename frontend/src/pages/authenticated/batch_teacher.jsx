@@ -18,6 +18,19 @@ function BatchTeacher() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Format date to dd/mm/yyyy format
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     fetchQuestions();
   }, [batchId]);
@@ -202,11 +215,11 @@ function BatchTeacher() {
                     )}
                     {question.startTime && (
                       <p>
-                        Start: {new Date(question.startTime).toLocaleString()}
+                        Start: {formatDate(question.startTime)}
                       </p>
                     )}
                     {question.endTime && (
-                      <p>End: {new Date(question.endTime).toLocaleString()}</p>
+                      <p>End: {formatDate(question.endTime)}</p>
                     )}
                   </div>
                 </div>
