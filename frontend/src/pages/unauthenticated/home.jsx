@@ -11,7 +11,7 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Features Section */}
       <Element name="features" className="pt-16">
-        <div className="w-screen flex h-[30vw] justify-center py-10">
+        <div className="w-screen flex min-h-[500px] md:h-[30vw] justify-center py-6 md:py-10">
           <Hero />
         </div>
         <HeroCards />

@@ -13,8 +13,6 @@ import BatchTeacher from "./pages/authenticated/batch_teacher";
 import EvalStudentDetail from "./pages/authenticated/evalStudentDetail";
 import Blogs from "./pages/authenticated/blogs";
 import BlogDetail from "./pages/authenticated/blogDetail";
-import StudentProgress from "./pages/authenticated/studentProgress";
-import TeacherStatus from "./pages/authenticated/teacherStatus";
 
 function App() {
   return (
@@ -85,22 +83,6 @@ function App() {
           element={
             <ProtectedRoute>
               <BlogDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/progress"
-          element={
-            <ProtectedRoute>
-              <StudentProgress />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/teacher-status"
-          element={
-            <ProtectedRoute>
-              <TeacherStatus />
             </ProtectedRoute>
           }
         />
