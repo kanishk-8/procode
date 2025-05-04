@@ -4,18 +4,27 @@ import ActivityFeed from "./ActivityFeed";
 import StatsGrid from "./StatsGrid";
 
 const TeacherDashboard = ({ stats }) => {
+  if (!stats) {
+    return <div>Loading dashboard data...</div>;
+  }
+
+  // Ensure all required arrays exist
+  const questionAttemptStats = stats.questionAttemptStats || [];
+  const topStudents = stats.topStudents || [];
+  const recentBatches = stats.recentBatches || [];
+
   const questionAttemptData = {
-    labels: stats.questionAttemptStats.map((q) => q.questionTitle),
+    labels: questionAttemptStats.map((q) => q.questionTitle || "Untitled"),
     datasets: [
       {
         label: "Average Score",
-        data: stats.questionAttemptStats.map((q) => q.avgScore),
+        data: questionAttemptStats.map((q) => q.avgScore || 0),
         borderColor: "rgb(59, 130, 246)",
         tension: 0.1,
       },
       {
         label: "Attempt Count",
-        data: stats.questionAttemptStats.map((q) => q.attemptCount),
+        data: questionAttemptStats.map((q) => q.attemptCount || 0),
         borderColor: "rgb(34, 197, 94)",
         tension: 0.1,
       },
@@ -23,16 +32,39 @@ const TeacherDashboard = ({ stats }) => {
   };
 
   const teacherStats = [
-    { label: "Total Students", value: stats.totalStudents, color: "blue" },
-    { label: "Active Batches", value: stats.activeBatches, color: "green" },
-    { label: "Total Questions", value: stats.totalQuestions, color: "purple" },
+    {
+      label: "Total Students",
+      value: stats.totalStudents > 0 ? stats.totalStudents : "No",
+      color: "blue",
+    },
+    {
+      label: "Active Batches",
+      value: stats.activeBatches > 0 ? stats.activeBatches : "No",
+      color: "green",
+    },
+    {
+      label: "Total Questions",
+      value: stats.totalQuestions > 0 ? stats.totalQuestions : "No",
+      color: "purple",
+    },
     {
       label: "Average Score",
-      value: `${stats.averageBatchScore.toFixed(1)}%`,
+      value:
+        stats.averageBatchScore > 0
+          ? `${Number(stats.averageBatchScore).toFixed(1)}%`
+          : "No scores yet",
       color: "yellow",
     },
-    { label: "Total Blogs", value: stats.totalBlogs, color: "indigo" },
-    { label: "Verified Blogs", value: stats.verifiedBlogs, color: "green" },
+    {
+      label: "Total Blogs",
+      value: stats.totalBlogs > 0 ? stats.totalBlogs : "No",
+      color: "indigo",
+    },
+    {
+      label: "Verified Blogs",
+      value: stats.verifiedBlogs > 0 ? stats.verifiedBlogs : "No",
+      color: "green",
+    },
   ];
 
   return (
@@ -66,23 +98,25 @@ const TeacherDashboard = ({ stats }) => {
         <div className="bg-white/5 rounded-xl border border-white/10 p-6">
           <h2 className="text-xl font-bold text-white mb-4">Top Students</h2>
           <div className="space-y-4">
-            {stats.topStudents.map((student, index) => (
+            {topStudents.map((student, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
               >
                 <div>
-                  <p className="text-white font-medium">{student.username}</p>
+                  <p className="text-white font-medium">
+                    {student.username || "Unknown"}
+                  </p>
                   <p className="text-sm text-zinc-400">
-                    {student.completedQuestions} questions completed
+                    {student.completedQuestions || 0} questions completed
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-green-400 font-bold">
-                    {student.avgScore.toFixed(1)}%
+                    {(student.avgScore || 0).toFixed(1)}%
                   </p>
                   <p className="text-sm text-zinc-400">
-                    {student.batchCount} batches
+                    {student.batchCount || 0} batches
                   </p>
                 </div>
               </div>
@@ -91,7 +125,7 @@ const TeacherDashboard = ({ stats }) => {
         </div>
       </div>
 
-      <ActivityFeed recentActivity={stats.recentBatches} type="teacher" />
+      <ActivityFeed recentActivity={recentBatches} type="teacher" />
     </div>
   );
 };

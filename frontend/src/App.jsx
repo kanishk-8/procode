@@ -13,6 +13,7 @@ import BatchTeacher from "./pages/authenticated/batch_teacher";
 import EvalStudentDetail from "./pages/authenticated/evalStudentDetail";
 import Blogs from "./pages/authenticated/blogs";
 import BlogDetail from "./pages/authenticated/blogDetail";
+import AdminPanel from "./pages/authenticated/admin";
 
 function App() {
   return (
@@ -83,6 +84,14 @@ function App() {
           element={
             <ProtectedRoute>
               <BlogDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute adminOnly>
+              <AdminPanel />
             </ProtectedRoute>
           }
         />

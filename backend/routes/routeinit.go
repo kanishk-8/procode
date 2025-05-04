@@ -39,8 +39,10 @@ func RegisterRoutes(app *fiber.App) {
 	app.Delete("/blog", middleware.RequireAuth, DeleteBlogHandler)
 	app.Post("/blog/request-deletion", middleware.RequireTeacherAuth, RequestBlogDeletionHandler)
 
-	// Teacher status management routes (admin only)
-	app.Get("/admin/teachers", middleware.RequireAdminAuth, GetTeachersListHandler)
-	app.Post("/admin/teachers/:teacherID/approve", middleware.RequireAdminAuth, ApproveTeacherHandler)
-	app.Post("/admin/teachers/:teacherID/revoke", middleware.RequireAdminAuth, RevokeTeacherHandler)
+	// Admin routes
+	adminGroup := app.Group("/admin")
+	adminGroup.Use(middleware.RequireAdminAuth)
+	adminGroup.Get("/teachers", GetTeachersListHandler)
+	adminGroup.Post("/teachers/:teacherID/approve", ApproveTeacherHandler)
+	adminGroup.Post("/teachers/:teacherID/revoke", RevokeTeacherHandler)
 }

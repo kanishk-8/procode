@@ -44,4 +44,9 @@ export const API_ENDPOINTS = {
   DELETE_BLOG: `${API_URL}/blog`,
   VERIFY_BLOG: `${API_URL}/blog/verify`,
   REQUEST_DELETION: `${API_URL}/blog/request-deletion`,
+
+  // Admin endpoints
+  ADMIN_TEACHERS: `${API_URL}/admin/teachers`,
+  APPROVE_TEACHER: (id) => `${API_URL}/admin/teachers/${id}/approve`,
+  REVOKE_TEACHER: (id) => `${API_URL}/admin/teachers/${id}/revoke`,
 };

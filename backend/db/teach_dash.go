@@ -51,6 +51,8 @@ type TopStudentInfo struct {
 
 // GetTeacherDashboardStats fetches all dashboard statistics for a teacher
 func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
+	fmt.Printf("Fetching dashboard stats for userID: %d\n", userID)
+
 	var teacherID int64
 	err := Con.QueryRow("SELECT id FROM teacher WHERE user_id = ?", userID).Scan(&teacherID)
 	if err != nil {
@@ -60,13 +62,14 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 		return nil, fmt.Errorf("error finding teacher: %w", err)
 	}
 
+	fmt.Printf("Found teacherID: %d\n", teacherID)
 	stats := &TeacherStats{}
 
-	// Get total, active batches
+	// Fix AVG calculation for scores
 	err = Con.QueryRow(`
 		SELECT 
-			COUNT(*) as total_batches,
-			SUM(CASE WHEN is_active = TRUE THEN 1 ELSE 0 END) as active_batches
+			COALESCE(COUNT(*), 0) as total_batches,
+			COALESCE(SUM(CASE WHEN is_active = TRUE THEN 1 ELSE 0 END), 0) as active_batches
 		FROM batch
 		WHERE teacher_id = ?
 	`, teacherID).Scan(&stats.TotalBatches, &stats.ActiveBatches)
@@ -74,12 +77,13 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 		return nil, fmt.Errorf("error getting batch counts: %w", err)
 	}
 
-	// Get total students across all batches
+	// Fix total students count query
 	err = Con.QueryRow(`
-		SELECT COUNT(DISTINCT bs.student_id)
-		FROM batch_student bs
+		SELECT COUNT(DISTINCT s.id)
+		FROM student s
+		JOIN batch_student bs ON s.id = bs.student_id
 		JOIN batch b ON bs.batch_id = b.id
-		WHERE b.teacher_id = ?
+		WHERE b.teacher_id = ? AND b.is_active = TRUE
 	`, teacherID).Scan(&stats.TotalStudents)
 	if err != nil {
 		return nil, fmt.Errorf("error getting student count: %w", err)
@@ -95,24 +99,31 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 		return nil, fmt.Errorf("error getting question count: %w", err)
 	}
 
-	// Get average score across all batches
+	// Fix average score calculation
 	err = Con.QueryRow(`
-		SELECT IFNULL(AVG(a.score), 0)
-		FROM attempt a
-		JOIN question q ON a.question_id = q.id
-		WHERE q.teacher_id = ? AND a.attempted = TRUE
+		SELECT COALESCE(
+			(SELECT AVG(score)
+			FROM attempt a
+			JOIN question q ON a.question_id = q.id
+			WHERE q.teacher_id = ? AND a.attempted = TRUE AND a.score > 0), 
+			0
+		)
 	`, teacherID).Scan(&stats.AverageBatchScore)
 	if err != nil {
 		return nil, fmt.Errorf("error getting average score: %w", err)
 	}
 
-	// Get blog statistics
+	// Fix blog statistics query
 	err = Con.QueryRow(`
-		SELECT
-			(SELECT COUNT(*) FROM blog b JOIN user u ON b.user_id = u.id JOIN teacher t ON u.id = t.user_id WHERE t.id = ?) as total_blogs,
-			(SELECT COUNT(*) FROM blog WHERE verified_by = ?) as verified_blogs,
-			(SELECT COUNT(*) FROM blog WHERE status = 'pending') as pending_blogs
-	`, teacherID, userID).Scan(&stats.TotalBlogs, &stats.VerifiedBlogs, &stats.PendingBlogs)
+		SELECT 
+			COUNT(DISTINCT CASE WHEN b.user_id = u.id THEN b.id END),
+			COUNT(DISTINCT CASE WHEN b.verified_by = ? THEN b.id END),
+			COUNT(DISTINCT CASE WHEN b.status = 'pending' THEN b.id END)
+		FROM blog b
+		JOIN user u ON b.user_id = u.id
+		JOIN teacher t ON u.id = t.user_id
+		WHERE t.id = ?
+	`, userID, teacherID).Scan(&stats.TotalBlogs, &stats.VerifiedBlogs, &stats.PendingBlogs)
 	if err != nil {
 		return nil, fmt.Errorf("error getting blog stats: %w", err)
 	}
@@ -131,7 +142,7 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 	}
 	defer rows.Close()
 
-	stats.RecentBatches = []RecentBatchInfo{}
+	stats.RecentBatches = make([]RecentBatchInfo, 0)
 	for rows.Next() {
 		var batch RecentBatchInfo
 		if err := rows.Scan(&batch.ID, &batch.Name, &batch.CreatedAt, &batch.IsActive, &batch.StudentCount); err != nil {
@@ -140,19 +151,19 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 		stats.RecentBatches = append(stats.RecentBatches, batch)
 	}
 
-	// Get question attempt statistics
+	// Fix question attempt statistics query
 	rows, err = Con.Query(`
 		SELECT 
 			q.id, q.title, b.name,
-			COUNT(a.id) as attempt_count,
-			IFNULL(AVG(a.score), 0) as avg_score,
-			SUM(CASE WHEN a.status = 'correct' THEN 1 ELSE 0 END) as correct_count
+			COUNT(DISTINCT a.id) as attempt_count,
+			COALESCE(AVG(NULLIF(a.score, 0)), 0) as avg_score,
+			COUNT(DISTINCT CASE WHEN a.status = 'correct' THEN a.id END) as correct_count
 		FROM question q
 		JOIN batch b ON q.batch_id = b.id
 		LEFT JOIN attempt a ON q.id = a.question_id AND a.attempted = TRUE
 		WHERE q.teacher_id = ?
-		GROUP BY q.id
-		ORDER BY attempt_count DESC
+		GROUP BY q.id, q.title, b.name
+		ORDER BY attempt_count DESC, q.created_at DESC
 		LIMIT 5
 	`, teacherID)
 	if err != nil {
@@ -160,7 +171,7 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 	}
 	defer rows.Close()
 
-	stats.QuestionAttemptStats = []QuestionAttemptStat{}
+	stats.QuestionAttemptStats = make([]QuestionAttemptStat, 0)
 	for rows.Next() {
 		var stat QuestionAttemptStat
 		if err := rows.Scan(&stat.QuestionID, &stat.QuestionTitle, &stat.BatchName,
@@ -170,21 +181,23 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 		stats.QuestionAttemptStats = append(stats.QuestionAttemptStats, stat)
 	}
 
-	// Get top performing students
+	// Fix top students query
 	rows, err = Con.Query(`
 		SELECT 
-			s.id, u.username,
+			s.id,
+			u.username,
 			COUNT(DISTINCT bs.batch_id) as batch_count,
-			IFNULL(AVG(a.score), 0) as avg_score,
-			COUNT(DISTINCT CASE WHEN a.attempted = TRUE THEN a.question_id END) as completed_questions
+			COALESCE(AVG(NULLIF(a.score, 0)), 0) as avg_score,
+			COUNT(DISTINCT CASE WHEN a.status IN ('correct', 'partially_correct') THEN a.question_id END) as completed
 		FROM student s
 		JOIN user u ON s.user_id = u.id
 		JOIN batch_student bs ON s.id = bs.student_id
 		JOIN batch b ON bs.batch_id = b.id
 		LEFT JOIN attempt a ON s.id = a.student_id
-		WHERE b.teacher_id = ?
-		GROUP BY s.id
-		ORDER BY avg_score DESC
+		WHERE b.teacher_id = ? AND b.is_active = TRUE
+		GROUP BY s.id, u.username
+		HAVING COUNT(DISTINCT a.id) > 0
+		ORDER BY avg_score DESC, completed DESC
 		LIMIT 5
 	`, teacherID)
 	if err != nil {
@@ -192,7 +205,7 @@ func GetTeacherDashboardStats(userID int64) (*TeacherStats, error) {
 	}
 	defer rows.Close()
 
-	stats.TopStudents = []TopStudentInfo{}
+	stats.TopStudents = make([]TopStudentInfo, 0)
 	for rows.Next() {
 		var student TopStudentInfo
 		if err := rows.Scan(&student.StudentID, &student.Username, &student.BatchCount,

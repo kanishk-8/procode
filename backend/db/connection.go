@@ -191,5 +191,33 @@ func createTablesIfNotExist() error {
 		}
 	}
 	fmt.Println("Tables verified/created.")
+
+	// After tables are created, create admin user if not exists
+	if err := createAdminIfNotExists(); err != nil {
+		return fmt.Errorf("error creating admin user: %v", err)
+	}
+
+	return nil
+}
+
+func createAdminIfNotExists() error {
+	var count int
+	if err := Con.QueryRow("SELECT COUNT(*) FROM user WHERE role = 'admin'").Scan(&count); err != nil {
+		return err
+	}
+
+	if count == 0 {
+		// Create admin user
+		hashedPassword := generateSHA256Hash("admin123")
+		_, err := Con.Exec(
+			"INSERT INTO user (username, email, userpassword, role) VALUES (?, ?, ?, ?)",
+			"admin", "admin@procode.in", hashedPassword, "admin",
+		)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Admin user created successfully")
+	}
+
 	return nil
 }

@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/kanishk-8/procode/db"
 )
@@ -9,11 +11,18 @@ import (
 func GetTeachersListHandler(c *fiber.Ctx) error {
 	teachers, err := db.GetTeachersList()
 	if err != nil {
+		// Log the error for debugging
+		fmt.Printf("Error fetching teachers list: %v\n", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to fetch teachers list",
 			"error":   err.Error(),
 		})
+	}
+
+	// Ensure we always return an array, even if empty
+	if teachers == nil {
+		teachers = []db.Teacher{}
 	}
 
 	return c.JSON(fiber.Map{

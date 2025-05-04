@@ -16,16 +16,17 @@ type Teacher struct {
 // GetTeachersList returns all teachers with their status, ordering pending first
 func GetTeachersList() ([]Teacher, error) {
 	query := `
-		SELECT teacher_id, username, email, status 
-		FROM teacher 
+		SELECT t.id, u.username, u.email, t.status 
+		FROM teacher t
+		JOIN user u ON t.user_id = u.id
 		ORDER BY 
 			CASE 
-				WHEN status = 'pending' THEN 1 
-				WHEN status = 'approved' THEN 2 
-				WHEN status = 'revoked' THEN 3 
+				WHEN t.status = 'pending' THEN 1 
+				WHEN t.status = 'approved' THEN 2 
+				WHEN t.status = 'revoked' THEN 3 
 				ELSE 4 
 			END, 
-			username
+			u.username
 	`
 
 	rows, err := Con.Query(query)
@@ -41,6 +42,11 @@ func GetTeachersList() ([]Teacher, error) {
 			return nil, err
 		}
 		teachers = append(teachers, t)
+	}
+
+	// Initialize empty slice if no results
+	if teachers == nil {
+		teachers = []Teacher{}
 	}
 
 	if err = rows.Err(); err != nil {
@@ -67,7 +73,7 @@ func SetTeacherPending(teacherID string) error {
 
 // updateTeacherStatus is a helper function to update the teacher's status
 func updateTeacherStatus(teacherID string, status string) error {
-	query := "UPDATE teacher SET status = ? WHERE teacher_id = ?"
+	query := "UPDATE teacher SET status = ? WHERE id = ?"
 	result, err := Con.Exec(query, status, teacherID)
 	if err != nil {
 		return err

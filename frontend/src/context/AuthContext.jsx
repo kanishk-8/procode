@@ -103,29 +103,33 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null); // Reset error at the start of login attempt
-      
+
       const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          username, 
+        body: JSON.stringify({
+          username,
           password: hashedPassword,
-          nonce 
+          nonce,
         }),
       });
-      
+
       const data = await response.json();
       console.log("Login response:", response.status, data);
-      
+
       if (!response.ok) {
         // Extract error message from response
         const errorMessage = data.message || "Login failed";
         console.log("Setting error:", errorMessage);
         setError(errorMessage);
         return false;
+      }
+
+      if (data.user.role === "admin") {
+        localStorage.setItem("isAdmin", "true");
       }
 
       setUser(data.user);
@@ -155,6 +159,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Logout failed");
       }
 
+      localStorage.removeItem("isAdmin");
       setUser(null);
       setError(null);
       localStorage.removeItem("hadSession");

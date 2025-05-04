@@ -2,20 +2,25 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const ProtectedRoute = ({ children }) => {
-  const { user, loading, isInitialized } = useAuth();
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const { isLoggedIn, user, loading } = useAuth();
 
-  // Show loading state while checking authentication
-  if (loading || !isInitialized) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
-  // Redirect to login if not authenticated
-  if (!user) {
+  if (!isLoggedIn) {
     return <Navigate to="/login" />;
   }
 
-  // Render children if authenticated
+  if (adminOnly && user?.role !== "admin") {
+    return <Navigate to="/" />;
+  }
+
+  if (user?.role === "admin" && !adminOnly) {
+    return <Navigate to="/admin" />;
+  }
+
   return children;
 };
 
