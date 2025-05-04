@@ -2,6 +2,7 @@ package routes
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kanishk-8/procode/db"
@@ -45,6 +46,22 @@ func CreateBlogHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Title and content are required",
 		})
+	}
+
+	// Add validation for tags
+	if len(req.Tags) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "At least one tag is required",
+		})
+	}
+
+	// Validate that tags are not empty strings
+	for _, tag := range req.Tags {
+		if strings.TrimSpace(tag) == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Empty tags are not allowed",
+			})
+		}
 	}
 
 	// Create excerpt if not provided

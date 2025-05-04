@@ -168,7 +168,7 @@ const ClassRoom = () => {
                   {batches.map((batch) => (
                     <div
                       key={batch.ID}
-                      className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-6 hover:border-zinc-700 transition-all"
+                      className="bg-white/5 rounded-lg border border-white/10 p-6 hover:border-white/20 transition-all"
                     >
                       <div className="flex justify-between items-start mb-4">
                         <Link
@@ -231,14 +231,14 @@ const ClassRoom = () => {
           {user?.role === "teacher" ? (
             <button
               onClick={() => setShowAddBatchModal(true)}
-              className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+              className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
             >
               Create Classroom
             </button>
           ) : (
             <button
               onClick={() => setShowJoinModal(true)}
-              className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+              className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
             >
               Join Classroom
             </button>
@@ -247,7 +247,7 @@ const ClassRoom = () => {
 
         {showAddBatchModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-8 w-[400px]">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-8 w-[400px] backdrop-blur-xl">
               <h3 className="text-xl font-bold mb-4">Create New Classroom</h3>
               <form onSubmit={handleAddBatch}>
                 <input
@@ -262,13 +262,13 @@ const ClassRoom = () => {
                   <button
                     type="button"
                     onClick={() => setShowAddBatchModal(false)}
-                    className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
                   >
                     Create
                   </button>
@@ -280,7 +280,7 @@ const ClassRoom = () => {
 
         {showJoinModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-8 w-[400px]">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-8 w-[400px] backdrop-blur-xl">
               <h3 className="text-xl font-bold mb-4">Join Classroom</h3>
               <form onSubmit={handleJoinBatch}>
                 <input
@@ -295,13 +295,13 @@ const ClassRoom = () => {
                   <button
                     type="button"
                     onClick={() => setShowJoinModal(false)}
-                    className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
                   >
                     Join
                   </button>
@@ -313,7 +313,7 @@ const ClassRoom = () => {
 
         {showStudentsModal && selectedBatch && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-8 w-[500px] max-h-[80vh] overflow-y-auto">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-8 w-[500px] max-h-[80vh] overflow-y-auto backdrop-blur-xl">
               <h3 className="text-xl font-bold mb-4">
                 Students in {selectedBatch.Name || `Batch ${selectedBatch.ID}`}
               </h3>
@@ -324,7 +324,7 @@ const ClassRoom = () => {
                   {students.map((student) => (
                     <div
                       key={student.ID}
-                      className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4"
+                      className="bg-white/5 border border-white/10 rounded-lg p-4"
                     >
                       <p className="font-medium">{student.Username}</p>
                       <p className="text-sm text-zinc-400">{student.Email}</p>
@@ -334,7 +334,7 @@ const ClassRoom = () => {
               )}
               <button
                 onClick={() => setShowStudentsModal(false)}
-                className="mt-6 w-full px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                className="mt-6 w-full px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
               >
                 Close
               </button>

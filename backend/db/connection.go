@@ -156,7 +156,7 @@ func createTablesIfNotExist() error {
 		title VARCHAR(255) NOT NULL,
 		content TEXT NOT NULL,
 		excerpt VARCHAR(255),
-		image_url VARCHAR(255),
+		image_url VARCHAR(2048),
 		status ENUM('pending', 'verified', 'rejected', 'delete_requested') DEFAULT 'pending',
 		verified_by INT,
 		deletion_requested_by INT,

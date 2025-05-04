@@ -707,11 +707,11 @@ const CodingSpace = () => {
               type="button"
               onClick={handleRunCode}
               disabled={submitting || !question}
-              className={`px-6 py-3 ${
+              className={`px-6 py-2 ${
                 submitting || !question
                   ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
                   : "bg-blue-500/10 text-blue-500 border border-blue-500/20 hover:bg-blue-500/20"
-              } rounded-full transition-colors shadow-lg`}
+              } rounded-lg transition-colors shadow-lg`}
             >
               {submitting ? "Running..." : "Run Code"}
             </button>
@@ -720,11 +720,11 @@ const CodingSpace = () => {
               type="button"
               onClick={handleManualSubmit}
               disabled={submitting || !question}
-              className={`px-6 py-3 ${
+              className={`px-6 py-2 ${
                 submitting || !question
                   ? "bg-zinc-500/10 text-zinc-400 border border-zinc-600/20"
                   : "bg-green-500/10 text-green-500 border border-green-500/20 hover:bg-green-500/20"
-              } rounded-full transition-colors shadow-lg`}
+              } rounded-lg transition-colors shadow-lg`}
             >
               Submit Solution
             </button>
@@ -764,13 +764,13 @@ const CodingSpace = () => {
             <div className="flex justify-end space-x-4">
               <button
                 onClick={cancelNavigation}
-                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
               >
                 Continue Test
               </button>
               <button
                 onClick={confirmNavigation}
-                className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
               >
                 Submit & Leave
               </button>
@@ -797,7 +797,7 @@ const CodingSpace = () => {
             <div className="flex justify-end">
               <button
                 onClick={dismissTabWarning}
-                className="px-6 py-3 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full hover:bg-amber-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg hover:bg-amber-500/20 transition-colors shadow-lg"
               >
                 I Understand
               </button>
@@ -823,13 +823,13 @@ const CodingSpace = () => {
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setShowSubmitConfirmation(false)}
-                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmSubmit}
-                className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
               >
                 Submit
               </button>

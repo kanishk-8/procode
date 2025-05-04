@@ -157,8 +157,8 @@ function Batch() {
               return (
                 <div
                   key={question.id}
-                  className={`p-5 border border-zinc-700 rounded-lg 
-                      ${available ? "" : "bg-zinc-800 opacity-70"} 
+                  className={`p-5 bg-white/5 border border-white/10 rounded-lg 
+                      ${available ? "" : "bg-opacity-70"} 
                       transition-colors duration-200`}
                 >
                   <div className="flex justify-between items-start">
@@ -216,20 +216,20 @@ function Batch() {
                     {available ? (
                       <button
                         onClick={() => handleStartQuestion(question)}
-                        className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                        className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
                       >
                         Start Question
                       </button>
                     ) : question.isAttempted ? (
                       <button
-                        className="px-4 py-2 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full cursor-not-allowed"
+                        className="px-4 py-2 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg cursor-not-allowed"
                         disabled
                       >
                         Already Attempted
                       </button>
                     ) : (
                       <button
-                        className="px-4 py-2 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full cursor-not-allowed"
+                        className="px-4 py-2 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg cursor-not-allowed"
                         disabled
                       >
                         Not Available
@@ -244,8 +244,8 @@ function Batch() {
 
         {/* Confirmation Dialog */}
         {showConfirmation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-6 max-w-md w-full">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-6 max-w-md w-full backdrop-blur-xl">
               <h3 className="text-xl font-semibold mb-4">Start Question</h3>
               <p className="mb-6 text-gray-300">
                 Warning: Once you start this question, you cannot reattempt it.
@@ -260,13 +260,13 @@ function Batch() {
               <div className="flex justify-end space-x-4">
                 <button
                   onClick={handleCancelStart}
-                  className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                  className="px-6 py-2 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmStart}
-                  className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                  className="px-6 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
                 >
                   Start
                 </button>

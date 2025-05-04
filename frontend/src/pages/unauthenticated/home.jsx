@@ -1,10 +1,10 @@
 import React from "react";
-import Hero from "../../components/hero";
-import Contact from "../../components/contact";
+import Hero from "../../components/homepage/hero";
+import Contact from "../../components/homepage/contact";
 import { Element } from "react-scroll";
-import WhyChooseUs from "../../components/whychooseus";
-import Pricing from "../../components/pricing";
-import HeroCards from "../../components/herocards";
+import WhyChooseUs from "../../components/homepage/whychooseus";
+import Pricing from "../../components/homepage/pricing";
+import HeroCards from "../../components/homepage/herocards";
 
 const Home = () => {
   return (

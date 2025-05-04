@@ -167,7 +167,7 @@ function BatchTeacher() {
           <div className="mt-4">
             <button
               onClick={() => setShowAddQuestionModal(true)}
-              className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+              className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
             >
               Add Question
             </button>
@@ -190,7 +190,7 @@ function BatchTeacher() {
                 key={question.id}
                 className="block"
               >
-                <div className="p-5 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors duration-200">
+                <div className="p-5 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors duration-200">
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium text-lg">{question.title}</h3>
                   </div>
@@ -225,7 +225,7 @@ function BatchTeacher() {
 
         {showAddQuestionModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-8 w-[700px] max-h-[90vh] overflow-y-auto">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-8 w-[700px] max-h-[90vh] overflow-y-auto backdrop-blur-xl">
               <h3 className="text-xl font-bold mb-4">Add New Question</h3>
               <form onSubmit={handleAddQuestion}>
                 <div className="space-y-4">
@@ -346,7 +346,7 @@ function BatchTeacher() {
                       <button
                         type="button"
                         onClick={addTestCase}
-                        className="px-3 py-1 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                        className="px-3 py-1 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
                       >
                         + Add Test Case
                       </button>
@@ -355,7 +355,7 @@ function BatchTeacher() {
                     {newQuestion.test_cases.map((testCase, index) => (
                       <div
                         key={index}
-                        className="mb-4 p-4 border border-zinc-700 rounded"
+                        className="mb-4 p-4 bg-white/5 border border-white/10 rounded-lg"
                       >
                         <div className="flex justify-between items-center mb-2">
                           <h4 className="font-medium">Test Case {index + 1}</h4>
@@ -437,13 +437,13 @@ function BatchTeacher() {
                   <button
                     type="button"
                     onClick={() => setShowAddQuestionModal(false)}
-                    className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                    className="px-4 py-2 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
                     disabled={!validateDateRange()}
                   >
                     Add Question

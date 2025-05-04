@@ -26,7 +26,7 @@ const BlogCard = ({ blog, onVerifyClick, onDeleteClick, currentUser }) => {
   });
 
   return (
-    <div className="bg-zinc-900/50 rounded-lg overflow-hidden border border-zinc-800 hover:border-zinc-700 transition-all">
+    <div className="bg-white/5 rounded-lg overflow-hidden border border-white/10 hover:border-white/20 transition-all">
       {blog.imageUrl ? (
         <img
           src={blog.imageUrl}
@@ -179,12 +179,12 @@ const Blogs = () => {
       }
 
       const data = await response.json();
-      
+
       // Check if the data has the expected structure
-      if (!data || typeof data !== 'object') {
+      if (!data || typeof data !== "object") {
         throw new Error("Invalid response format");
       }
-      
+
       // Initialize blogs as an empty array if it's missing in the response
       setBlogs(Array.isArray(data.blogs) ? data.blogs : []);
       setError(null);
@@ -201,14 +201,14 @@ const Blogs = () => {
   const getFilteredBlogs = () => {
     // Make sure blogs is always treated as an array
     const blogsArray = Array.isArray(blogs) ? blogs : [];
-    
+
     // Return early if blogs array is empty
     if (blogsArray.length === 0) return [];
 
     return blogsArray.filter((blog) => {
       // Skip invalid blog objects
       if (!blog) return false;
-      
+
       // Fix status filter
       if (filter !== "all" && blog.status !== filter) {
         return false;
@@ -247,11 +247,23 @@ const Blogs = () => {
   const handleCreateBlog = async (e) => {
     e.preventDefault();
 
+    // Add validation for required tags
+    if (!newBlog.tags.trim()) {
+      setError("Please add at least one tag");
+      return;
+    }
+
     try {
       const tagsArray = newBlog.tags
         .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag !== "");
+
+      // Additional validation for empty tags after processing
+      if (tagsArray.length === 0) {
+        setError("Please add at least one valid tag");
+        return;
+      }
 
       const response = await fetch(API_ENDPOINTS.CREATE_BLOG, {
         method: "POST",
@@ -379,7 +391,7 @@ const Blogs = () => {
                 <select
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
-                  className="w-full sm:w-44 px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full sm:w-44 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
                   aria-label="Filter blog status"
                 >
                   <option value="all">All Blogs</option>
@@ -410,7 +422,7 @@ const Blogs = () => {
                   <select
                     value={creatorFilter}
                     onChange={(e) => setCreatorFilter(e.target.value)}
-                    className="w-full sm:w-44 px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full sm:w-44 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
                     aria-label="Filter by author"
                   >
                     <option value="all">All Authors</option>
@@ -438,7 +450,7 @@ const Blogs = () => {
             {user && (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="w-full sm:w-auto px-6 py-2.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg whitespace-nowrap"
+                className="w-full sm:w-auto px-6 py-2.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg whitespace-nowrap"
               >
                 Create Blog
               </button>
@@ -489,7 +501,7 @@ const Blogs = () => {
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto backdrop-blur-xl">
             <h3 className="text-2xl font-semibold mb-6">Create New Blog</h3>
 
             <form onSubmit={handleCreateBlog} className="space-y-6">
@@ -547,7 +559,7 @@ const Blogs = () => {
 
               <div>
                 <label className="block text-zinc-400 mb-1">
-                  Tags (comma separated)
+                  Tags (comma separated) *
                 </label>
                 <input
                   type="text"
@@ -557,7 +569,12 @@ const Blogs = () => {
                   }
                   className="w-full p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg"
                   placeholder="e.g. JavaScript, React, Programming"
+                  required
                 />
+                <p className="text-zinc-500 text-sm mt-1">
+                  At least one tag is required. Separate multiple tags with
+                  commas.
+                </p>
               </div>
 
               {user?.role === "student" ? (
@@ -580,13 +597,13 @@ const Blogs = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                  className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                  className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-colors shadow-lg"
                 >
                   Publish Blog
                 </button>
@@ -611,7 +628,7 @@ const Blogs = () => {
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setShowVerifyModal(false)}
-                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
               >
                 Cancel
               </button>
@@ -620,13 +637,13 @@ const Blogs = () => {
                 <>
                   <button
                     onClick={() => handleVerifyBlog("rejected")}
-                    className="px-6 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full hover:bg-red-500/20 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors shadow-lg"
                   >
                     Reject
                   </button>
                   <button
                     onClick={() => handleVerifyBlog("verified")}
-                    className="px-6 py-3 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full hover:bg-green-500/20 transition-colors shadow-lg"
+                    className="px-6 py-3 bg-green-500/10 text-green-500 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition-colors shadow-lg"
                   >
                     Verify
                   </button>
@@ -649,13 +666,13 @@ const Blogs = () => {
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-full hover:bg-zinc-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-zinc-500/10 text-zinc-400 border border-zinc-600/20 rounded-lg hover:bg-zinc-500/20 transition-colors shadow-lg"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteBlog}
-                className="px-6 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full hover:bg-red-500/20 transition-colors shadow-lg"
+                className="px-6 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors shadow-lg"
               >
                 Delete
               </button>
