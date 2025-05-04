@@ -9,6 +9,12 @@ const Navbar = () => {
   const isLoggedIn = user !== null;
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+
+  // Hide navbar for admin routes
+  if (location.pathname.startsWith("/admin")) {
+    return null;
+  }
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
