@@ -1,64 +1,77 @@
-FROM golang:1.23.7-alpine AS builder
+FROM golang:1.21 AS builder
 
 WORKDIR /app
-RUN apk add --no-cache git build-base
 
-# Copy only go.mod first to leverage caching
-COPY go.mod ./
-RUN go mod download && go mod verify
+# Initialize a new module
+RUN go mod init github.com/kanishk-8/procode
 
-# Now copy the rest of the source code
-COPY . .
+# Create necessary directories for packages
+RUN mkdir -p db middleware routes
+
+# Copy package files to their respective directories
+COPY db/*.go ./db/
+COPY middleware/*.go ./middleware/
+COPY routes/*.go ./routes/
+COPY main.go .
+COPY .env .
+
+# Add required dependencies
+RUN go get github.com/gofiber/fiber/v2@v2.52.6 && \
+    go get github.com/golang-jwt/jwt/v4@v4.5.2 && \
+    go get github.com/go-sql-driver/mysql@v1.9.2 && \
+    go get github.com/joho/godotenv@v1.5.1 && \
+    go get golang.org/x/crypto@v0.16.0
+
+# Download all dependencies
+RUN go mod tidy
+
+# Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-FROM alpine:latest
+FROM debian:bullseye-slim
 
-# Install MySQL and other required packages
-RUN apk add --no-cache mysql mysql-client bash curl
+RUN apt-get update && \
+    apt-get install -y mariadb-server procps && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy binary and env file from builder
 COPY --from=builder /app/main .
 COPY --from=builder /app/.env .
 
-# Create startup script with proper error handling
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
-echo "Initializing MySQL..."\n\
-mysql_install_db --user=mysql --datadir=/var/lib/mysql\n\
-mkdir -p /run/mysqld\n\
-chown -R mysql:mysql /run/mysqld\n\
-chown -R mysql:mysql /var/lib/mysql\n\
+echo "Initializing MariaDB directories..."\n\
+mkdir -p /var/run/mysqld /var/lib/mysql\n\
+chown -R mysql:mysql /var/run/mysqld /var/lib/mysql\n\
+chmod 777 /var/run/mysqld\n\
 \n\
-echo "Starting MySQL server..."\n\
-/usr/bin/mysqld --user=mysql --datadir=/var/lib/mysql --console &\n\
+if [ ! -d "/var/lib/mysql/mysql" ]; then\n\
+    echo "Initializing MariaDB data directory..."\n\
+    mysqld --initialize-insecure --user=mysql\n\
+fi\n\
 \n\
-echo "Waiting for MySQL to be ready..."\n\
+echo "Starting MariaDB server..."\n\
+service mariadb start\n\
+\n\
+# Wait for MariaDB to be ready\n\
 for i in {1..30}; do\n\
-    if mysqladmin ping -h "localhost" --silent; then\n\
+    if mariadb -e "SELECT 1" &>/dev/null; then\n\
         break\n\
     fi\n\
-    echo "Waiting for MySQL to be ready... ($i/30)"\n\
+    echo "Waiting for MariaDB to be ready... ($i/30)"\n\
     sleep 1\n\
 done\n\
 \n\
-if ! mysqladmin ping -h "localhost" --silent; then\n\
-    echo "MySQL failed to start"\n\
-    exit 1\n\
-fi\n\
-\n\
-echo "Configuring MySQL..."\n\
-mysql -u root << EOF\n\
+echo "Configuring MariaDB..."\n\
+mariadb -e "SET PASSWORD FOR '\''root'\''@'\''localhost'\'' = PASSWORD('\''rootpass'\'');\n\
 CREATE DATABASE IF NOT EXISTS procode;\n\
-ALTER USER '"'"'root'"'"'@'"'"'localhost'"'"' IDENTIFIED BY '"'"'rootpass'"'"';\n\
-GRANT ALL PRIVILEGES ON procode.* TO '"'"'root'"'"'@'"'"'localhost'"'"';\n\
-FLUSH PRIVILEGES;\n\
-EOF\n\
+FLUSH PRIVILEGES;"\n\
 \n\
 echo "Starting Go application..."\n\
-exec ./main' > /app/start.sh
+./main\n\
+' > /app/start.sh
 
 RUN chmod +x /app/start.sh
 
