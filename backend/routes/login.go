@@ -2,10 +2,9 @@ package routes
 
 import (
 	"log"
+	"os"
 	"strings"
 	"time"
-
-	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -16,7 +15,8 @@ var jwtSecret = os.Getenv("jwt_secret_key")
 
 type LoginRequest struct {
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"password"` // This is now the final hash
+	Nonce    string `json:"nonce"`
 }
 
 type LoginResponse struct {
@@ -40,6 +40,7 @@ func LoginHandler(c *fiber.Ctx) error {
 	// Trim input
 	body.Username = strings.TrimSpace(body.Username)
 	body.Password = strings.TrimSpace(body.Password)
+	body.Nonce = strings.TrimSpace(body.Nonce)
 
 	// Validate input
 	if body.Username == "" {
@@ -48,15 +49,18 @@ func LoginHandler(c *fiber.Ctx) error {
 	if body.Password == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Password is required"})
 	}
+	if body.Nonce == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Nonce is required"})
+	}
 
-	// Check credentials
-	user, err := db.GetUserByCredentials(body.Username, body.Password)
+	// Check credentials with nonce
+	user, err := db.GetUserByCredentials(body.Username, body.Password, body.Nonce)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Invalid credentials",
+			"message": err.Error(),
 		})
 	}
-    log.Println(user.Role)
+	log.Println(user.Role)
 	// JWT generation and persistent cookie
 	claims := jwt.MapClaims{
 		"userId":   user.ID,

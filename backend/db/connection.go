@@ -53,7 +53,7 @@ func createTablesIfNotExist() error {
 		username VARCHAR(100) NOT NULL UNIQUE,
 		email VARCHAR(100),
 		userpassword VARCHAR(100),
-		role ENUM('student', 'teacher'),
+		role ENUM('student', 'teacher', 'admin'),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
@@ -70,6 +70,7 @@ func createTablesIfNotExist() error {
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		user_id INT,
 		teacher_id VARCHAR(100) NOT NULL,
+		status ENUM('pending', 'approved','revoked') DEFAULT 'pending',
 		FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 	);`
 

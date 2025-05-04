@@ -3,6 +3,18 @@ import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { API_ENDPOINTS } from "../../config/api";
 
+// Helper function to convert string to SHA256 hash
+const sha256 = async (message) => {
+  // Encode as UTF-8
+  const msgBuffer = new TextEncoder().encode(message);
+  // Hash the message
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  // Convert ArrayBuffer to hex string
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+};
+
 const SignUp = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -46,10 +58,19 @@ const SignUp = () => {
 
     setError("");
     try {
+      // Hash the password with SHA256
+      const hashedPassword = await sha256(password);
+      
       const response = await fetch(API_ENDPOINTS.SIGNUP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, email, userId, role }),
+        body: JSON.stringify({ 
+          username, 
+          password: hashedPassword, // Send hashed password instead
+          email, 
+          userId, 
+          role 
+        }),
       });
 
       const data = await response.json();
@@ -140,13 +161,14 @@ const SignUp = () => {
                 </label>
                 <select
                   id="role"
-                  className="w-full p-2 bg-white/5 border border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white appearance-none"
+                  className="w-full p-2 border border-white/10 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white appearance-none bg-white/5"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   disabled={loading}
+                  style={{ color: "white", backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                 >
-                  <option value="student">Student</option>
-                  <option value="teacher">Teacher</option>
+                  <option value="student" style={{ color: "white", backgroundColor: "rgba(30, 30, 30, 0.95)" }}>Student</option>
+                  <option value="teacher" style={{ color: "white", backgroundColor: "rgba(30, 30, 30, 0.95)" }}>Teacher</option>
                 </select>
               </div>
 

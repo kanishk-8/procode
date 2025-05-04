@@ -98,24 +98,36 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isLoggedIn]);
 
-  const login = async (username, password) => {
+  // Add nonce parameter to the login function
+  const login = async (username, hashedPassword, nonce) => {
     try {
       setLoading(true);
+      setError(null); // Reset error at the start of login attempt
+      
       const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ 
+          username, 
+          password: hashedPassword,
+          nonce 
+        }),
       });
-      console.log("Login response:", response);
+      
+      const data = await response.json();
+      console.log("Login response:", response.status, data);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
+        // Extract error message from response
+        const errorMessage = data.message || "Login failed";
+        console.log("Setting error:", errorMessage);
+        setError(errorMessage);
+        return false;
       }
 
-      const data = await response.json();
       setUser(data.user);
       setError(null);
       localStorage.setItem("hadSession", "true");
@@ -123,7 +135,7 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.message);
+      setError(err.message || "An error occurred during login");
       return false;
     } finally {
       setLoading(false);

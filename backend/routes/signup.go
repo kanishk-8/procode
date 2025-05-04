@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kanishk-8/procode/db"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type SignUpRequest struct {
@@ -21,10 +20,6 @@ type SignUpRequest struct {
 // 	app.Post("/signup", SignUpHandler)
 // }
 
-func HashPassword(password string) (string, error) {
-bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14) // cost 14 for better security
-return string(bytes), err
-}
 func SignUpHandler(c *fiber.Ctx) error {
 	var body SignUpRequest
 
@@ -59,10 +54,9 @@ func SignUpHandler(c *fiber.Ctx) error {
 	if body.Role != "student" && body.Role != "teacher" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Role must be 'student' or 'teacher'"})
 	}
-	hashedPassword, _ := HashPassword(body.Password)
-	
+
 	// Create user and role
-	_, err := db.CreateUserWithRole(body.Username, body.Email, hashedPassword, body.Role, body.UserId)
+	_, err := db.CreateUserWithRole(body.Username, body.Email, body.Password, body.Role, body.UserId)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Error creating user: " + err.Error(),

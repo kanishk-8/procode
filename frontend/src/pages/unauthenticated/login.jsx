@@ -2,6 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
+// Utility function for SHA-256 hashing
+const sha256Hash = async (message) => {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+// Generate 8-digit numeric nonce
+const generateNonce = () => {
+  // Generate a random number between 10000000 and 99999999 (8 digits)
+  return Math.floor(10000000 + Math.random() * 90000000).toString();
+};
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +31,13 @@ const Login = () => {
     }
   }, [user, navigate]);
 
+  // Add useEffect to watch for authError changes
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -31,14 +52,23 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const success = await login(username, password);
+      // First round of hashing
+      const firstHash = await sha256Hash(password);
+      
+      // Generate a random nonce
+      const nonce = generateNonce();
+      
+      // Second round of hashing with nonce
+      const finalHash = await sha256Hash(firstHash + nonce);
+      
+      // Pass the username, final hash, and nonce to the login function
+      const success = await login(username, finalHash, nonce);
 
       if (success) {
         // Replace current page with classroom after successful login
         navigate("/classroom", { replace: true });
-      } else {
-        setError(authError || "Login failed. Please try again.");
       }
+      // Remove the else clause that checks authError since we handle this with useEffect now
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
       console.error("Login error:", err);
