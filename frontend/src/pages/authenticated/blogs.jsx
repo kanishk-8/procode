@@ -179,20 +179,36 @@ const Blogs = () => {
       }
 
       const data = await response.json();
-      setBlogs(data.blogs || []);
+      
+      // Check if the data has the expected structure
+      if (!data || typeof data !== 'object') {
+        throw new Error("Invalid response format");
+      }
+      
+      // Initialize blogs as an empty array if it's missing in the response
+      setBlogs(Array.isArray(data.blogs) ? data.blogs : []);
       setError(null);
     } catch (err) {
+      console.error("Blog fetch error:", err);
       setError("Failed to load blogs: " + err.message);
-      console.error(err);
+      // Ensure blogs is always an array even in error case
+      setBlogs([]);
     } finally {
       setLoading(false);
     }
   };
 
   const getFilteredBlogs = () => {
-    if (!blogs) return [];
+    // Make sure blogs is always treated as an array
+    const blogsArray = Array.isArray(blogs) ? blogs : [];
+    
+    // Return early if blogs array is empty
+    if (blogsArray.length === 0) return [];
 
-    return blogs.filter((blog) => {
+    return blogsArray.filter((blog) => {
+      // Skip invalid blog objects
+      if (!blog) return false;
+      
       // Fix status filter
       if (filter !== "all" && blog.status !== filter) {
         return false;
@@ -225,7 +241,8 @@ const Blogs = () => {
     });
   };
 
-  const filteredBlogs = getFilteredBlogs();
+  // Add safe access to filteredBlogs
+  const filteredBlogs = getFilteredBlogs() || [];
 
   const handleCreateBlog = async (e) => {
     e.preventDefault();
@@ -452,7 +469,7 @@ const Blogs = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredBlogs.map((blog) => (
               <BlogCard
-                key={blog.id}
+                key={blog.id || `blog-${Math.random()}`} // Ensure a key is always provided
                 blog={blog}
                 currentUser={user}
                 onVerifyClick={

@@ -29,6 +29,12 @@ export const API_ENDPOINTS = {
   // Student evaluation endpoints
   GET_QUESTION_STATUS: (batchId, questionId) =>
     `${API_URL}/question-status/${batchId}/${questionId}`,
+    
+  // Student dashboard endpoint
+  STUDENT_DASHBOARD: `${API_URL}/student/dashboard`,
+  
+  // Teacher dashboard endpoint
+  TEACHER_DASHBOARD: `${API_URL}/teacher/dashboard`,
 
   // Blog endpoints
   GET_BLOG: (blogId) => `${API_URL}/blog/${blogId}`,

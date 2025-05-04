@@ -25,6 +25,12 @@ func RegisterRoutes(app *fiber.App) {
 	// Add the new question status endpoint with teacher authentication
 	app.Get("/question-status/:batchID/:questionID", middleware.RequireTeacherAuth, GetQuestionStatusHandler)
 
+	// Student dashboard endpoint
+	app.Get("/student/dashboard", middleware.RequireStudentAuth, GetStudentDashboardStatsHandler)
+
+	// Teacher dashboard endpoint
+	app.Get("/teacher/dashboard", middleware.RequireTeacherAuth, GetTeacherDashboardStatsHandler)
+
 	// Blog routes
 	app.Post("/blog", middleware.RequireAuth, CreateBlogHandler)
 	app.Get("/blog/:blogID", GetBlogByIDHandler)
