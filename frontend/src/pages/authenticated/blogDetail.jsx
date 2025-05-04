@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { API_ENDPOINTS } from "../../config/api";
 
 const BlogDetail = () => {
   const { blogId } = useParams();
@@ -23,7 +24,7 @@ const BlogDetail = () => {
   const fetchBlog = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8080/blog/${blogId}`, {
+      const response = await fetch(API_ENDPOINTS.GET_BLOG(blogId), {
         credentials: "include",
       });
 
@@ -46,7 +47,7 @@ const BlogDetail = () => {
 
   const handleVerifyBlog = async (status) => {
     try {
-      const response = await fetch("http://localhost:8080/blog/verify", {
+      const response = await fetch(API_ENDPOINTS.VERIFY_BLOG, {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -73,7 +74,7 @@ const BlogDetail = () => {
 
   const handleDeleteBlog = async () => {
     try {
-      const response = await fetch("http://localhost:8080/blog", {
+      const response = await fetch(API_ENDPOINTS.DELETE_BLOG, {
         method: "DELETE",
         credentials: "include",
         headers: {
@@ -103,20 +104,17 @@ const BlogDetail = () => {
     }
 
     try {
-      const response = await fetch(
-        "http://localhost:8080/blog/request-deletion",
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            blogId: parseInt(blogId),
-            message: deletionMessage,
-          }),
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.REQUEST_DELETION, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          blogId: parseInt(blogId),
+          message: deletionMessage,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to request blog deletion");

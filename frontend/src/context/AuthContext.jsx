@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { API_ENDPOINTS } from "../config/api";
 
 const AuthContext = createContext();
 
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   const fetchCurrentUser = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8080/currentUser", {
+      const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -69,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     if (isLoggedIn) {
       refreshInterval = setInterval(async () => {
         try {
-          const response = await fetch("http://localhost:8080/refresh", {
+          const response = await fetch(API_ENDPOINTS.REFRESH_TOKEN, {
             method: "GET",
             credentials: "include",
           });
@@ -100,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8080/login", {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -108,7 +109,7 @@ export const AuthProvider = ({ children }) => {
         },
         body: JSON.stringify({ username, password }),
       });
-
+      console.log("Login response:", response);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Login failed");
@@ -133,7 +134,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8080/logout", {
+      const response = await fetch(API_ENDPOINTS.LOGOUT, {
         method: "GET",
         credentials: "include",
       });

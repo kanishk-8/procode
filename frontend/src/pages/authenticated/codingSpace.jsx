@@ -5,6 +5,7 @@ import {
   UNSAFE_NavigationContext,
 } from "react-router-dom";
 import Editor from "@monaco-editor/react";
+import { API_ENDPOINTS } from "../../config/api";
 
 const CodingSpace = () => {
   const { questionId } = useParams();
@@ -120,21 +121,26 @@ const CodingSpace = () => {
     if (!testInProgress || submitting || error) return;
 
     // Initialize warning count from localStorage if it exists
-    const storedWarningCount = localStorage.getItem(`tabWarnings_${questionId}`);
+    const storedWarningCount = localStorage.getItem(
+      `tabWarnings_${questionId}`
+    );
     if (storedWarningCount) {
       setWarningCount(parseInt(storedWarningCount, 10));
     }
 
     // Handle tab/window visibility change
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
+      if (document.visibilityState === "hidden") {
         // User switched away from the tab
         const newWarningCount = warningCount + 1;
         setWarningCount(newWarningCount);
-        
+
         // Store the updated warning count in localStorage
-        localStorage.setItem(`tabWarnings_${questionId}`, newWarningCount.toString());
-        
+        localStorage.setItem(
+          `tabWarnings_${questionId}`,
+          newWarningCount.toString()
+        );
+
         // Auto-submit after 3 warnings
         if (newWarningCount >= 3) {
           // Submit the test automatically on the 3rd warning
@@ -146,10 +152,10 @@ const CodingSpace = () => {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [testInProgress, submitting, error, warningCount, questionId]);
 
@@ -170,7 +176,7 @@ const CodingSpace = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8080/getquestiondetailsbyid/${batchId}/${questionId}`,
+        API_ENDPOINTS.GET_QUESTION_DETAILS(batchId, questionId),
         {
           credentials: "include",
         }
@@ -266,15 +272,15 @@ const CodingSpace = () => {
       // Start the timer
       setTimeRemaining(remainingSeconds);
       setTimerActive(true);
-      
+
       // Ensure we clear any existing interval before starting a new one
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
       }
-      
+
       // Explicitly start the timer interval
       startTimer(remainingSeconds);
-      
+
       console.log("Timer started with", remainingSeconds, "seconds remaining");
     }
   };
@@ -301,7 +307,7 @@ const CodingSpace = () => {
         return prevTime - 1;
       });
     }, 1000);
-    
+
     // Add console log for debugging
     console.log("Timer interval started:", timerIntervalRef.current);
   };
@@ -345,7 +351,7 @@ const CodingSpace = () => {
         language_id: languageId,
       });
 
-      const response = await fetch("http://localhost:8080/evalques", {
+      const response = await fetch(API_ENDPOINTS.EVAL_QUESTION, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -402,7 +408,7 @@ const CodingSpace = () => {
 
       const code = editorRef.current.getValue();
 
-      const response = await fetch("http://localhost:8080/evalques", {
+      const response = await fetch(API_ENDPOINTS.EVAL_QUESTION, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -777,13 +783,16 @@ const CodingSpace = () => {
       {showTabWarning && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900/90 border border-zinc-800 rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-semibold mb-4 text-amber-500">Tab Switch Warning</h3>
+            <h3 className="text-xl font-semibold mb-4 text-amber-500">
+              Tab Switch Warning
+            </h3>
             <p className="mb-4 text-gray-300">
-              We detected that you switched away from this tab. This is considered as potential
-              cheating behavior.
+              We detected that you switched away from this tab. This is
+              considered as potential cheating behavior.
             </p>
             <p className="mb-6 font-medium">
-              Warning {warningCount} of 3. Your test will be automatically submitted after 3 warnings.
+              Warning {warningCount} of 3. Your test will be automatically
+              submitted after 3 warnings.
             </p>
             <div className="flex justify-end">
               <button

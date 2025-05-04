@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../../config/api";
 
 const SignUp = () => {
   const [username, setUsername] = useState("");
@@ -45,7 +46,7 @@ const SignUp = () => {
 
     setError("");
     try {
-      const response = await fetch("http://localhost:8080/signup", {
+      const response = await fetch(API_ENDPOINTS.SIGNUP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, email, userId, role }),

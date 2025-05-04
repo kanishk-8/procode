@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Outlet, Link } from "react-router-dom";
+import { API_ENDPOINTS } from "../../config/api";
 
 function BatchTeacher() {
   const { batchId } = useParams();
@@ -25,7 +26,7 @@ function BatchTeacher() {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8080/getquestionsbybatch/${batchId}`,
+        API_ENDPOINTS.GET_QUESTIONS_BY_BATCH(batchId),
         {
           credentials: "include",
         }
@@ -73,7 +74,8 @@ function BatchTeacher() {
         ? new Date(newQuestion.end_time).toISOString()
         : null;
 
-      const response = await fetch("http://localhost:8080/addquestion", {
+      const response = await fetch(API_ENDPOINTS.ADD_QUESTION, {
+        // Changed from EVAL_QUESTION to ADD_QUESTION
         method: "POST",
         credentials: "include",
         headers: {

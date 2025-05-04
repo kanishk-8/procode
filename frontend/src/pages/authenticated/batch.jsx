@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../../config/api";
 
 function Batch() {
   const { batchId } = useParams();
@@ -20,7 +21,7 @@ function Batch() {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8080/getquestionsbybatch/${batchId}`,
+        API_ENDPOINTS.GET_QUESTIONS_BY_BATCH(batchId),
         {
           credentials: "include",
         }

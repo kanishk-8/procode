@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { API_ENDPOINTS } from "../../config/api";
 
 const BlogCard = ({ blog, onVerifyClick, onDeleteClick, currentUser }) => {
   const userId =
@@ -169,9 +170,7 @@ const Blogs = () => {
     try {
       setLoading(true);
 
-      const endpoint = "http://localhost:8080/blogs";
-
-      const response = await fetch(endpoint, {
+      const response = await fetch(API_ENDPOINTS.GET_ALL_BLOGS, {
         credentials: "include",
       });
 
@@ -237,7 +236,7 @@ const Blogs = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag !== "");
 
-      const response = await fetch("http://localhost:8080/blog", {
+      const response = await fetch(API_ENDPOINTS.CREATE_BLOG, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -284,7 +283,7 @@ const Blogs = () => {
     if (!selectedBlog) return;
 
     try {
-      const response = await fetch("http://localhost:8080/blog/verify", {
+      const response = await fetch(API_ENDPOINTS.VERIFY_BLOG, {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -318,7 +317,7 @@ const Blogs = () => {
     if (!blogToDelete) return;
 
     try {
-      const response = await fetch("http://localhost:8080/blog", {
+      const response = await fetch(API_ENDPOINTS.DELETE_BLOG, {
         method: "DELETE",
         credentials: "include",
         headers: {

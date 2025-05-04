@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { API_ENDPOINTS } from "../../config/api";
 
 const ClassRoom = () => {
   const { user } = useAuth();
@@ -21,8 +22,8 @@ const ClassRoom = () => {
       setIsLoading(true);
       const endpoint =
         user?.role === "teacher"
-          ? "http://localhost:8080/getBatchesByTeacher"
-          : "http://localhost:8080/getstudentbatches";
+          ? API_ENDPOINTS.GET_BATCHES_BY_TEACHER
+          : API_ENDPOINTS.GET_STUDENT_BATCHES;
 
       const response = await fetch(endpoint, {
         credentials: "include",
@@ -50,7 +51,7 @@ const ClassRoom = () => {
   const handleAddBatch = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:8080/addBatch", {
+      const response = await fetch(API_ENDPOINTS.ADD_BATCH, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -73,7 +74,7 @@ const ClassRoom = () => {
     if (!window.confirm("Are you sure you want to delete this batch?")) return;
 
     try {
-      const response = await fetch("http://localhost:8080/deleteBatch", {
+      const response = await fetch(API_ENDPOINTS.DELETE_BATCH, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -92,13 +93,10 @@ const ClassRoom = () => {
   const handleJoinBatch = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        `http://localhost:8080/joinbatch/${batchCode}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.JOIN_BATCH(batchCode), {
+        method: "GET",
+        credentials: "include",
+      });
 
       if (!response.ok) {
         const data = await response.json();
@@ -117,7 +115,7 @@ const ClassRoom = () => {
   const fetchStudentsInBatch = async (batchId) => {
     try {
       const response = await fetch(
-        `http://localhost:8080/getstudentsinbatch/${batchId}`,
+        API_ENDPOINTS.GET_STUDENTS_IN_BATCH(batchId),
         {
           credentials: "include",
         }

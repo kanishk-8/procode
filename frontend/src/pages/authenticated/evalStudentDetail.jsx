@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { API_ENDPOINTS } from "../../config/api";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -45,7 +46,7 @@ const EvalStudentDetail = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8080/question-status/${batchId}/${questionId}`,
+        API_ENDPOINTS.GET_QUESTION_STATUS(batchId, questionId),
         {
           credentials: "include",
         }
