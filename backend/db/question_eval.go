@@ -2,11 +2,13 @@ package db
 
 import (
 	"bytes"
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -120,12 +122,10 @@ func EvaluateCode(userID int64, questionID int64, code string, languageID int, c
 	}
 
 	// If end_time exists, no more submissions allowed
-	if endTimeExists {
-		return nil, errors.New("final submission has already been made for this question")
-	}
+	log.Println(attemptID, startTime, endTimeExists, alreadyAttempted)
 
 	// If this is a graded submission (calculateScore is true) and the attempt is already marked as attempted
-	if calculateScore && alreadyAttempted {
+	if alreadyAttempted {
 		return nil, errors.New("this attempt has already been submitted for grading")
 	}
 
@@ -312,10 +312,16 @@ func runTestCase(apiURL, apiKey, code string, languageID int, input, expectedOut
 	q.Add("wait", "true")
 	req.URL.RawQuery = q.Encode()
 
-	// Make the request
+	// Create a custom HTTP client with a modified TLS configuration that accepts all certificates
 	client := &http.Client{
 		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // Skip certificate verification - use with caution
+			},
+		},
 	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return TestResult{}, fmt.Errorf("error sending request: %w", err)

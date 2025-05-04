@@ -30,9 +30,15 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 FROM debian:bullseye-slim
 
+# Install MySQL 8 client, timezone data and other dependencies
 RUN apt-get update && \
-    apt-get install -y mariadb-server procps && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y wget lsb-release gnupg tzdata procps ca-certificates && \
+    apt-get install -y mariadb-server && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -fs /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata && \
+    # Install root certificates to fix TLS issues
+    update-ca-certificates
 
 WORKDIR /app
 
@@ -81,6 +87,7 @@ ENV DB_USER=root \
     DB_PASSWORD=rootpass \
     DB_HOST=localhost \
     DB_PORT=3306 \
-    DB_NAME=procode
+    DB_NAME=procode \
+    TZ=Asia/Kolkata
 
 CMD ["/app/start.sh"]
