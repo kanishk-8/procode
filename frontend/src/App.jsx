@@ -41,7 +41,7 @@ function App() {
           }
         />
         <Route
-          path="/evalStudentDetail/:questionId"
+          path="/evalStudentDetail/:batchId/:questionId"
           element={
             <ProtectedRoute>
               <EvalStudentDetail />

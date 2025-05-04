@@ -184,7 +184,7 @@ function BatchTeacher() {
           <div className="grid gap-4">
             {questions.map((question) => (
               <Link
-                to={`/evalStudentDetail/${question.id}`}
+                to={`/evalStudentDetail/${batchId}/${question.id}`}
                 key={question.id}
                 className="block"
               >
