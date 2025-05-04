@@ -345,55 +345,32 @@ const Blogs = () => {
   return (
     <div className="min-h-screen py-28 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-12">
+        {/* Update header section */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-bold mb-4">ProCode Blog</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 md:mb-4">
+              ProCode Blog
+            </h1>
             <p className="text-zinc-400">
               Stay updated with the latest in programming and technology
             </p>
           </div>
 
-          <div className="flex gap-4">
-            <div className="relative">
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="px-6 py-3 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
-                aria-label="Filter blog status"
-              >
-                <option value="all">All Blogs</option>
-                <option value="verified">Verified Only</option>
-                {user?.role === "teacher" && (
-                  <option value="pending">Pending Review</option>
-                )}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            {user && (
-              <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <div className="relative w-full sm:w-auto">
                 <select
-                  value={creatorFilter}
-                  onChange={(e) => setCreatorFilter(e.target.value)}
-                  className="px-6 py-3 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
-                  aria-label="Filter by author"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="w-full sm:w-44 px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
+                  aria-label="Filter blog status"
                 >
-                  <option value="all">All Authors</option>
-                  <option value="mine">My Blogs</option>
+                  <option value="all">All Blogs</option>
+                  <option value="verified">Verified Only</option>
+                  {user?.role === "teacher" && (
+                    <option value="pending">Pending Review</option>
+                  )}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
                   <svg
@@ -411,12 +388,41 @@ const Blogs = () => {
                   </svg>
                 </div>
               </div>
-            )}
+
+              {user && (
+                <div className="relative w-full sm:w-auto">
+                  <select
+                    value={creatorFilter}
+                    onChange={(e) => setCreatorFilter(e.target.value)}
+                    className="w-full sm:w-44 px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-full text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
+                    aria-label="Filter by author"
+                  >
+                    <option value="all">All Authors</option>
+                    <option value="mine">My Blogs</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {user && (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-3 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg"
+                className="w-full sm:w-auto px-6 py-2.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-full hover:bg-blue-500/20 transition-colors shadow-lg whitespace-nowrap"
               >
                 Create Blog
               </button>
