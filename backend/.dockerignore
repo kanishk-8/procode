@@ -1,0 +1,43 @@
+# Ignore version control files
+.git
+.gitignore
+
+# Ignore environment and configuration files (will be provided at runtime)
+.env
+*.env
+*.conf
+
+# Ignore Docker-related files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Ignore build artifacts and binary files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/build
+/bin
+
+# Ignore Go-specific files and directories
+/vendor
+*.log
+*.test
+*.prof
+go.work
+go.sum
+
+# Ignore editor and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
