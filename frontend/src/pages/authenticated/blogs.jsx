@@ -347,7 +347,7 @@ const Blogs = () => {
 
     try {
       const response = await fetch(API_ENDPOINTS.DELETE_BLOG, {
-        method: "DELETE",
+        method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",

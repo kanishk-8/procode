@@ -48,7 +48,7 @@ const BlogDetail = () => {
   const handleVerifyBlog = async (status) => {
     try {
       const response = await fetch(API_ENDPOINTS.VERIFY_BLOG, {
-        method: "PUT",
+        method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -75,7 +75,7 @@ const BlogDetail = () => {
   const handleDeleteBlog = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.DELETE_BLOG, {
-        method: "DELETE",
+        method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",

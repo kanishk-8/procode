@@ -41,7 +41,7 @@ export const API_ENDPOINTS = {
   GET_ALL_BLOGS: `${API_URL}/blogs`,
   CREATE_BLOG: `${API_URL}/blog`,
   UPDATE_BLOG: `${API_URL}/blog`,
-  DELETE_BLOG: `${API_URL}/blog`,
+  DELETE_BLOG: `${API_URL}/blog/delete`,
   VERIFY_BLOG: `${API_URL}/blog/verify`,
   REQUEST_DELETION: `${API_URL}/blog/request-deletion`,
 

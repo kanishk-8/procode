@@ -35,8 +35,8 @@ func RegisterRoutes(app *fiber.App) {
 	app.Post("/blog", middleware.RequireAuth, CreateBlogHandler)
 	app.Get("/blog/:blogID", GetBlogByIDHandler)
 	app.Get("/blogs", ListBlogsHandler)
-	app.Put("/blog/verify", middleware.RequireTeacherAuth, VerifyBlogHandler)
-	app.Delete("/blog", middleware.RequireAuth, DeleteBlogHandler)
+	app.Post("/blog/verify", middleware.RequireTeacherAuth, VerifyBlogHandler)
+	app.Post("/blog/delete", middleware.RequireAuth, DeleteBlogHandler)
 	app.Post("/blog/request-deletion", middleware.RequireTeacherAuth, RequestBlogDeletionHandler)
 
 	// Admin routes
