@@ -120,11 +120,13 @@ const CodingSpace = () => {
     // Only add the listener if a test is in progress
     if (!testInProgress || submitting || error) return;
 
-    // Initialize warning count from localStorage if it exists
-    const storedWarningCount = localStorage.getItem(
-      `tabWarnings_${questionId}`
-    );
-    if (storedWarningCount) {
+    // Reset warning count to 0 when starting a new test/question
+    if (!localStorage.getItem(`tabWarnings_${questionId}`)) {
+      setWarningCount(0);
+      localStorage.setItem(`tabWarnings_${questionId}`, "0");
+    } else {
+      // Initialize warning count from localStorage if it exists
+      const storedWarningCount = localStorage.getItem(`tabWarnings_${questionId}`);
       setWarningCount(parseInt(storedWarningCount, 10));
     }
 
@@ -143,16 +145,39 @@ const CodingSpace = () => {
 
         // Auto-submit after 3 warnings
         if (newWarningCount >= 3) {
-          // Submit the test automatically on the 3rd warning
+          // Set a flag in localStorage to indicate auto-submission is needed
+          // This helps handle the submission when tab becomes visible again
+          localStorage.setItem(`autoSubmit_${questionId}`, "true");
+          
+          // Attempt submission now but browser might throttle this in hidden tab
           handleFinalSubmit();
-        } else {
-          // Show warning when tab becomes visible again
+        }
+      } else if (document.visibilityState === "visible") {
+        // Check if we need to auto-submit when tab becomes visible again
+        const needsAutoSubmit = localStorage.getItem(`autoSubmit_${questionId}`) === "true";
+        
+        if (needsAutoSubmit) {
+          // Clear the auto-submit flag
+          localStorage.removeItem(`autoSubmit_${questionId}`);
+          // Submit the test since we reached the warning limit
+          handleFinalSubmit();
+          return; // Skip showing warning
+        }
+        
+        // Show warning for less than 3 warnings
+        if (warningCount > 0 && warningCount < 3) {
           setTimeout(() => setShowTabWarning(true), 500);
         }
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Check on initial load if we need to auto-submit
+    if (localStorage.getItem(`autoSubmit_${questionId}`) === "true") {
+      localStorage.removeItem(`autoSubmit_${questionId}`);
+      handleFinalSubmit();
+    }
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -163,6 +188,8 @@ const CodingSpace = () => {
   useEffect(() => {
     fetchQuestionDetails();
     setTestInProgress(true);
+    // Reset warning count when component mounts with a new question
+    setWarningCount(0);
     return () => {
       // Clear timer interval on unmount
       if (timerIntervalRef.current) {
@@ -403,10 +430,16 @@ const CodingSpace = () => {
     if (!editorRef.current) return;
 
     try {
+      // Prevent duplicate submissions
+      if (submitting) return;
+      
       setSubmitting(true);
       setOutputMessage("Submitting final solution...");
 
       const code = editorRef.current.getValue();
+      
+      // Log submission attempt for debugging
+      console.log("Attempting final submission with code length:", code.length);
 
       const response = await fetch(API_ENDPOINTS.EVAL_QUESTION, {
         method: "POST",
@@ -437,6 +470,10 @@ const CodingSpace = () => {
 
       // Clean up timer data from localStorage
       localStorage.removeItem(`timer_${questionId}`);
+      
+      // Also clean up the warning count from localStorage
+      localStorage.removeItem(`tabWarnings_${questionId}`);
+      setWarningCount(0);
 
       // Clear the timer interval
       if (timerIntervalRef.current) {

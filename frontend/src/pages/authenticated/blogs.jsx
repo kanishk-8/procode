@@ -391,13 +391,14 @@ const Blogs = () => {
                 <select
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
-                  className="w-full sm:w-44 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full sm:w-44 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
                   aria-label="Filter blog status"
+                  style={{ color: "white", backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                 >
-                  <option value="all">All Blogs</option>
-                  <option value="verified">Verified Only</option>
+                  <option value="all" style={{ color: "white", backgroundColor: "rgba(30, 30, 30, 0.95)" }}>All Blogs</option>
+                  <option value="verified" style={{ color: "white", backgroundColor: "rgba(30, 30, 30, 0.95)" }}>Verified Only</option>
                   {user?.role === "teacher" && (
-                    <option value="pending">Pending Review</option>
+                    <option value="pending" style={{ color: "white", backgroundColor: "rgba(30, 30, 30, 0.95)" }}>Pending Review</option>
                   )}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
@@ -422,11 +423,12 @@ const Blogs = () => {
                   <select
                     value={creatorFilter}
                     onChange={(e) => setCreatorFilter(e.target.value)}
-                    className="w-full sm:w-44 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-zinc-300 appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full sm:w-44 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white appearance-none pr-10 focus:outline-none focus:border-blue-500 transition-colors"
                     aria-label="Filter by author"
+                    style={{ color: "white", backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                   >
-                    <option value="all">All Authors</option>
-                    <option value="mine">My Blogs</option>
+                    <option value="all" style={{ color: "white", backgroundColor: "rgba(30, 30, 30, 0.95)" }}>All Authors</option>
+                    <option value="mine" style={{ color: "white", backgroundColor: "rgba(30, 30, 30, 0.95)" }}>My Blogs</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
                     <svg
