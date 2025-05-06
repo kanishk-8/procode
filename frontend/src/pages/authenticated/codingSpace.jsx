@@ -126,7 +126,9 @@ const CodingSpace = () => {
       localStorage.setItem(`tabWarnings_${questionId}`, "0");
     } else {
       // Initialize warning count from localStorage if it exists
-      const storedWarningCount = localStorage.getItem(`tabWarnings_${questionId}`);
+      const storedWarningCount = localStorage.getItem(
+        `tabWarnings_${questionId}`
+      );
       setWarningCount(parseInt(storedWarningCount, 10));
     }
 
@@ -148,14 +150,15 @@ const CodingSpace = () => {
           // Set a flag in localStorage to indicate auto-submission is needed
           // This helps handle the submission when tab becomes visible again
           localStorage.setItem(`autoSubmit_${questionId}`, "true");
-          
+
           // Attempt submission now but browser might throttle this in hidden tab
           handleFinalSubmit();
         }
       } else if (document.visibilityState === "visible") {
         // Check if we need to auto-submit when tab becomes visible again
-        const needsAutoSubmit = localStorage.getItem(`autoSubmit_${questionId}`) === "true";
-        
+        const needsAutoSubmit =
+          localStorage.getItem(`autoSubmit_${questionId}`) === "true";
+
         if (needsAutoSubmit) {
           // Clear the auto-submit flag
           localStorage.removeItem(`autoSubmit_${questionId}`);
@@ -163,7 +166,7 @@ const CodingSpace = () => {
           handleFinalSubmit();
           return; // Skip showing warning
         }
-        
+
         // Show warning for less than 3 warnings
         if (warningCount > 0 && warningCount < 3) {
           setTimeout(() => setShowTabWarning(true), 500);
@@ -439,12 +442,12 @@ const CodingSpace = () => {
     try {
       // Prevent duplicate submissions
       if (submitting) return;
-      
+
       setSubmitting(true);
       setOutputMessage("Submitting final solution...");
 
       const code = editorRef.current.getValue();
-      
+
       // Log submission attempt for debugging
       console.log("Attempting final submission with code length:", code.length);
 
@@ -786,8 +789,41 @@ const CodingSpace = () => {
               minimap: { enabled: false },
               automaticLayout: true,
               wordWrap: "on",
+              // Disable paste functionality
+              quickSuggestions: true,
+              contextmenu: false, // Disable context menu to prevent paste
+              // Override keyboard shortcuts for paste
+              "keyboard.overrideCtrlV": true,
+              // Add additional options for editor configuration
+              readOnly: false, // Not setting to true to allow typing
+              // Custom keybindings to disable paste
+              actionOnKeyboardEvent: (e) => {
+                // Intercept Ctrl+V / Cmd+V
+                if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+                  return true; // Prevent the default behavior
+                }
+                return false;
+              },
             }}
-            onMount={handleEditorDidMount}
+            onMount={(editor, monaco) => {
+              // Store editor reference
+              editorRef.current = editor;
+
+              // Disable paste command
+              editor.addCommand(
+                monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyV, // Ctrl+V or Cmd+V
+                () => {
+                  // Do nothing, effectively disabling paste
+                  console.log("Paste operation blocked");
+                }
+              );
+
+              // Also disable for context menu
+              editor.onContextMenu(() => {
+                console.log("Context menu blocked");
+                return false;
+              });
+            }}
             key={languageId} // Re-render editor when language changes
           />
         </div>
