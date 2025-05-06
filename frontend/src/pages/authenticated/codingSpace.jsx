@@ -184,6 +184,13 @@ const CodingSpace = () => {
     };
   }, [testInProgress, submitting, error, warningCount, questionId]);
 
+  // clear autoSubmit flag on unmount or when question changes
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem(`autoSubmit_${questionId}`);
+    };
+  }, [questionId]);
+
   // Fetch question details when component mounts
   useEffect(() => {
     fetchQuestionDetails();
@@ -470,10 +477,10 @@ const CodingSpace = () => {
 
       // Clean up timer data from localStorage
       localStorage.removeItem(`timer_${questionId}`);
-      
-      // Also clean up the warning count from localStorage
+      // Clean up tab warnings
       localStorage.removeItem(`tabWarnings_${questionId}`);
-      setWarningCount(0);
+      // Clean up auto-submit flag
+      localStorage.removeItem(`autoSubmit_${questionId}`);
 
       // Clear the timer interval
       if (timerIntervalRef.current) {
